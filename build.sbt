@@ -17,5 +17,6 @@ libraryDependencies ++= Seq(
     "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided->default",
     "junit" % "junit" % "4.9" % "test",
     "org.specs2" %% "specs2" % "1.6.1" % "test",
-    "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test"
+    "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test",
+    "org.mockito" % "mockito-all" % "1.8.5" % "test"
 )
