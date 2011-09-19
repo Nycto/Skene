@@ -5,6 +5,10 @@ scalaVersion := "2.9.1"
 // Add support for the sbt web plugin
 seq(webSettings :_*)
 
+// append -deprecation to the options passed to the Scala compiler
+scalacOptions += "-deprecation"
+
+// Repositories in which to find dependencies
 resolvers ++= Seq(
     "Maven Repository" at "http://repo1.maven.org/maven2/org/",
     "Specs Repository" at "http://scala-tools.org/repo-releases"
