@@ -1,31 +1,29 @@
 package main.scala.com.skene
 
-/**
- * A pairing of a matcher and it's handler
- */
-private case class Entry( val matcher: Matcher, val handler: Handler );
+import java.util.concurrent.ConcurrentLinkedQueue
+import scala.collection.JavaConversions._
 
 /**
  * Dispatches a request against a set of handlers based on matching rules
  *
- * This class is immutable, so any mutating methods actually return a new
- * instance that contains the requested changes
+ * This class is thread safe
  */
-class Dispatcher private (
-    private val entries: List[Entry],
-    private val defaultHdlr: Option[Handler]
-) extends Handler {
+class Dispatcher extends Handler {
 
     /**
-     * The primary constructor...
+     * A pairing of a matcher and it's handler
      */
-    def this () = this( Nil, None )
+    private case class Entry( val matcher: Matcher, val handler: Handler )
 
     /**
-     * To make iteration faster when handling requests, this holds a reversed
-     * copy of the entries list
+     * The list of entries collected in this dispatcher
      */
-    lazy private val revEntries = entries.reverse
+    private val entries = new ConcurrentLinkedQueue[Entry]
+
+    /**
+     * The default handler to use when none of the matchers apply
+     */
+    private var default: Option[Handler] = None
 
     /**
      * The handler to use when nothing matches and there is no default
@@ -37,16 +35,22 @@ class Dispatcher private (
     })
 
     /**
-     * Returns a new Dispatcher with the given handler added to it
+     * Adds a matcher/handler pair to this Dispatcher
      */
-    def add ( matcher: Matcher, handler: Handler ): Dispatcher
-        = new Dispatcher( new Entry(matcher, handler) :: entries, defaultHdlr )
+    def add ( matcher: Matcher, handler: Handler ): Dispatcher = {
+        entries.add( new Entry(matcher, handler) )
+        this
+    }
 
     /**
-     * Returns a new Dispatcher with the given the default handler
+     * Changes the default handler for this dispatcher
      */
-    def default ( handler: Handler ): Dispatcher
-        = new Dispatcher( entries, Some(handler) )
+    def default ( handler: Handler ): Dispatcher = {
+        default.synchronized {
+            default = Some(handler)
+        }
+        this
+    }
 
     /**
      * Checks the list of possible handlers and executes
@@ -54,11 +58,11 @@ class Dispatcher private (
      */
     override def handle( context: Context ): Renderable = {
 
-        val matched = revEntries.find( _.matcher.matches(context) );
+        val matched = entries.iterator.find( _.matcher.matches(context) )
 
         val handler = matched match {
             case Some(entry) => entry.handler
-            case None => defaultHdlr.getOrElse( unresolvable )
+            case None => default.getOrElse( unresolvable )
         }
 
         handler.handle( context )
