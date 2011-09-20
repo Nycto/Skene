@@ -1,19 +1,24 @@
 package main.scala.com.example
 
-import main.scala.com.skene._
+import main.scala.com.skene.SkeneApp
+import main.scala.com.skene.Context
 
-object Start {
-    def main(args : Array[String]): Unit = {
-        Server(
-            port = 8080,
-            handler = new Dispatcher
-                add( Matcher.path("/one"), Handler {
-                    <h1>Path One</h1>
-                })
-                add( Matcher.path("/two"), Handler {
-                    <h1>Path Two</h1>
-                })
-        )
+object Start extends SkeneApp( port = 8080 ) {
+
+    index {
+        "<h1>Root Directory</h1>"
+    }
+
+    request ("/one") {
+        "<h1>One</<h1>"
+    }
+
+    request ("/two") {
+        "<h1>Two</<h1>"
+    }
+
+    default {
+        "<h1>404 not found</h1>"
     }
 }
 
