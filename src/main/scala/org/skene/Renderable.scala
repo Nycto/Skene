@@ -1,4 +1,4 @@
-package main.scala.com.skene
+package org.skene
 
 import java.io.Writer
 import java.lang.StringBuilder

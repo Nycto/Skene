@@ -1,4 +1,4 @@
-package main.scala.com.skene
+package org.skene
 
 import javax.servlet.http.{HttpServletRequest => ServletRequest}
 import javax.servlet.http.{HttpServletResponse => ServletResponse}
@@ -9,7 +9,7 @@ import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.server.{Server => JettyServer}
 import org.eclipse.jetty.server.{Request => RawJettyRequest}
 
-import main.scala.com.skene.context._
+import org.skene.context._
 
 /**
  * Helper methods for starting a server

@@ -1,4 +1,4 @@
-package main.scala.com.skene
+package org.skene
 
 /**
  * Methods for quickly building small handlers

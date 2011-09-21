@@ -7,7 +7,7 @@ import java.io.Writer
 import java.lang.StringBuilder
 import java.lang.StringBuffer
 
-import main.scala.com.skene._
+import org.skene._
 
 class RenderableTest extends Specification with Mockito {
 

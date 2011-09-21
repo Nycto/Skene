@@ -1,4 +1,4 @@
-package main.scala.com.skene
+package org.skene
 
 import java.net.{URL => JavaURL}
 import java.lang.StringBuffer

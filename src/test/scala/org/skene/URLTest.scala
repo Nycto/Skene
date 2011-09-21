@@ -2,7 +2,7 @@ package test.scala.com.skene
 
 import org.specs2.mutable._
 
-import main.scala.com.skene.URL
+import org.skene.URL
 
 class URLTest extends Specification {
 

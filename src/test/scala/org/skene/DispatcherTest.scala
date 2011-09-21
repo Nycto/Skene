@@ -3,7 +3,7 @@ package test.scala.com.skene
 import org.specs2.mutable._
 import org.specs2.mock._
 
-import main.scala.com.skene._
+import org.skene._
 
 class DispatcherTest extends Specification with Mockito {
 

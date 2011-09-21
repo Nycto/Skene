@@ -1,6 +1,6 @@
-package main.scala.com.skene
+package org.skene
 
-import main.scala.com.skene._
+import org.skene._
 
 
 /**

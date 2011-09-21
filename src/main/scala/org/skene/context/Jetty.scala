@@ -1,10 +1,10 @@
-package main.scala.com.skene.context
+package org.skene.context
 
 import javax.servlet.http.{HttpServletRequest => ServletRequest}
 import javax.servlet.http.{HttpServletResponse => ServletResponse}
 
-import main.scala.com.skene.URL
-import main.scala.com.skene.Context
+import org.skene.URL
+import org.skene.Context
 
 /**
  * Provides access to the relevant parts of a Jetty Request

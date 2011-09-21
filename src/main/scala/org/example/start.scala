@@ -1,7 +1,7 @@
 package main.scala.com.example
 
-import main.scala.com.skene.SkeneApp
-import main.scala.com.skene.Context
+import org.skene.SkeneApp
+import org.skene.Context
 
 object Start extends SkeneApp( port = 8080 ) {
 

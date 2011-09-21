@@ -3,7 +3,7 @@ package test.scala.com.skene.matcher
 import org.specs2.mutable._
 import org.specs2.mock.Mockito
 
-import main.scala.com.skene._
+import org.skene._
 
 class MatcherTest extends Specification with Mockito {
 

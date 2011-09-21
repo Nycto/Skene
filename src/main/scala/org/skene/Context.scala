@@ -1,4 +1,4 @@
-package main.scala.com.skene
+package org.skene
 
 /**
  * Represents the context of a request and the associated response

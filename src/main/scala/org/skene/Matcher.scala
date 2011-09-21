@@ -1,6 +1,6 @@
-package main.scala.com.skene {
+package org.skene {
 
-    import main.scala.com.skene.matcher._
+    import org.skene.matcher._
 
     /**
      * Helper methods creating matchers
@@ -22,10 +22,10 @@ package main.scala.com.skene {
     }
 }
 
-package main.scala.com.skene.matcher {
+package org.skene.matcher {
 
-    import main.scala.com.skene.Context
-    import main.scala.com.skene.Matcher
+    import org.skene.Context
+    import org.skene.Matcher
 
     /**
      * Matches against the path of a request

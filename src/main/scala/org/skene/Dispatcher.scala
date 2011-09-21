@@ -1,4 +1,4 @@
-package main.scala.com.skene
+package org.skene
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.JavaConversions._
