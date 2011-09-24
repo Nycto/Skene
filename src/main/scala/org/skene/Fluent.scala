@@ -11,10 +11,10 @@ class Fluent (
     private val matcher: Matcher
 ) {
 
-    def apply ( callback: (Context) => Renderable ): Unit
+    def apply ( callback: (Context) => Response ): Unit
         = dispatcher.add( matcher, Handler(callback) )
 
-    def apply ( callback: => Renderable ): Unit
+    def apply ( callback: => Response ): Unit
         = dispatcher.add( matcher, Handler(callback) )
 
     def apply ( handler: Handler ): Unit
@@ -35,7 +35,7 @@ trait Skene extends Handler {
     /**
      * @see Handler
      */
-    override def handle( context: Context ): Renderable
+    override def handle( context: Context ): Response
         = dispatcher.handle( context )
 
     /**

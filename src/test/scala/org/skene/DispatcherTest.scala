@@ -11,12 +11,12 @@ class DispatcherTest extends Specification with Mockito {
     val context = mock[Context]
 
     // The renderable object that is returned when a test passes
-    val rendered = Renderable("Pass")
+    val response = Response("Pass")
 
     // A handler that allows itself to be called
     val handlerCallable = {
         val handler = mock[Handler]
-        handler.handle(context) returns rendered
+        handler.handle(context) returns response
         handler
     }
 
@@ -37,7 +37,7 @@ class DispatcherTest extends Specification with Mockito {
                     .add( Matcher.always, handlerUncallable )
             }
 
-            dispatcher.handle( context ) must_== rendered
+            dispatcher.handle( context ) must_== response
         }
 
         "not call handlers when the matcher doesn't pass" in {
@@ -48,7 +48,7 @@ class DispatcherTest extends Specification with Mockito {
                     .add( Matcher.always, handlerCallable )
             }
 
-            dispatcher.handle( context ) must_== rendered
+            dispatcher.handle( context ) must_== response
         }
     }
 

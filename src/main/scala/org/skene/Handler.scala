@@ -5,10 +5,10 @@ package org.skene
  */
 object Handler {
 
-    def apply( callback: (Context) => Renderable ): Handler
+    def apply( callback: (Context) => Response ): Handler
         = new CallbackHandler(callback)
 
-    def apply( thunk: => Renderable ): Handler
+    def apply( thunk: => Response ): Handler
         = new CallbackHandler(thunk)
 }
 
@@ -19,19 +19,20 @@ trait Handler {
     /**
      * Handles the given request and returns the response data
      */
-    def handle( context: Context ): Renderable
+    def handle( context: Context ): Response
 }
 
 /**
  * A helper handler that simply converts a callback into a handler
  */
-class CallbackHandler ( private val callback: (Context) => Renderable )
+class CallbackHandler
+    ( private val callback: (Context) => Response )
     extends Handler
 {
     /**
      * An alternate constructor that allows thunks to be used as handlers
      */
-    def this ( thunk: => Renderable ) = this((context: Context) => {
+    def this ( thunk: => Response ) = this((context: Context) => {
         thunk
     })
 

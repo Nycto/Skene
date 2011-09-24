@@ -56,7 +56,7 @@ class Dispatcher extends Handler {
      * Checks the list of possible handlers and executes
      * the one that matches
      */
-    override def handle( context: Context ): Renderable = {
+    override def handle( context: Context ): Response = {
 
         val matched = entries.iterator.find( _.matcher.matches(context) )
 

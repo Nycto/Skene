@@ -23,10 +23,10 @@ object Server {
         server.join();
     }
 
-    def apply ( port: Int, handler: => Renderable ): Unit
+    def apply ( port: Int, handler: => Response ): Unit
         = apply( port, Handler(handler) )
 
-    def apply ( port: Int, handler: (Context) => Renderable ): Unit
+    def apply ( port: Int, handler: (Context) => Response ): Unit
         = apply( port, Handler(handler) )
 }
 
@@ -50,7 +50,9 @@ private class JettyAdapter ( private val handler: Handler )
 
         val context = new JettyContext( request, response )
 
-        handler.handle( context ).render( response.getWriter )
+        val result = handler.handle( context )
+
+        result.content.render( response.getWriter )
 
         baseRequest.setHandled(true)
     }

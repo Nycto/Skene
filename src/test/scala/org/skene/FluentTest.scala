@@ -7,9 +7,9 @@ import org.skene._
 
 class SkeneTest extends Specification with Mockito {
 
-    val indexPage = Renderable("index")
-    val specificPage = Renderable("specificPage")
-    val defaultPage = Renderable("default")
+    val indexPage = Response("index")
+    val specificPage = Response("specificPage")
+    val defaultPage = Response("default")
 
     val interface = new Skene {
         index { indexPage }
