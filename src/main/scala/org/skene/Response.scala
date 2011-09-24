@@ -5,6 +5,9 @@ import java.lang.StringBuilder
 import java.lang.StringBuffer
 import scala.xml.NodeSeq
 
+import scala.collection.immutable.Map
+import scala.collection.immutable.TreeMap
+
 /**
  * An HTTP Response code
  */
@@ -18,8 +21,15 @@ case class ResponseCode ( val code: Int ) {
  */
 class Response (
     val content: Renderable = Renderable(""),
-    val code: ResponseCode = Response.OK
+    val code: ResponseCode = Response.OK,
+    val headers: Map[String,String] = new TreeMap
 ) {
+
+    /**
+     * Builds a new response object from this one, but including a new header
+     */
+    def setHeader ( header: String, value: String )
+        = new Response( content, code, headers + ((header, value)) )
 }
 
 /**

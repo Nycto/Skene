@@ -49,7 +49,13 @@ private class JettyAdapter ( private val handler: Handler )
 
         val result = handler.handle( new JettyContext( request, response ) )
 
+        // Change the status code
         response.setStatus( result.code.code )
+
+        // Add in any custom headers
+        result.headers.foreach { (header) =>
+            response.setHeader( header._1, header._2 )
+        };
 
         result.content.render( response.getWriter )
 

@@ -13,7 +13,8 @@ object Start extends SkeneApp( port = 8080 ) {
     }
 
     request ("/two") {
-        "<h1>Two</<h1>"
+        Response("<h1>Two</<h1>")
+            .setHeader("X-Skene", "Interesting...")
     }
 
     default {
