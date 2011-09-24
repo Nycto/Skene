@@ -46,11 +46,10 @@ private class JettyAdapter ( private val handler: Handler )
 
         // Set some sensible defaults
         response.setContentType("text/html;charset=utf-8")
-        response.setStatus(ServletResponse.SC_OK)
 
-        val context = new JettyContext( request, response )
+        val result = handler.handle( new JettyContext( request, response ) )
 
-        val result = handler.handle( context )
+        response.setStatus( result.code.code )
 
         result.content.render( response.getWriter )
 
