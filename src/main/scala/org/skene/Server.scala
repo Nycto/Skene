@@ -18,7 +18,8 @@ object Server {
 
     def apply ( port: Int, handler: Handler ): Unit = {
         val server = new JettyServer(port)
-        server.setHandler( new JettyAdapter(handler) );
+        server.setHandler( new JettyAdapter(handler) )
+        server.setSendServerVersion(false)
         server.start();
         server.join();
     }
