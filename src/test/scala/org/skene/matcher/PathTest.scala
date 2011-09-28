@@ -63,5 +63,39 @@ class PathTest extends Specification with Mockito {
             Matcher.path("/path/*/other").matches(context) must_== false
         }
     }
+
+    "A named path matcher" should {
+
+        "treat a named parameter like a glob" in {
+            Matcher.path("/path/to/:name").matches(context) must_== true
+            Matcher.path("/path/:one/:two").matches(context) must_== true
+            Matcher.path("/:path/to/resource").matches(context) must_== true
+        }
+
+        "ignore extra colons" in {
+            Matcher.path("/path/to/:::name").matches(context) must_== true
+            Matcher.path("/path/::one::/::::two").matches(context) must_== true
+        }
+
+        "not care about a leading slash" in {
+            Matcher.path(":path/to/resource").matches(context) must_== true
+        }
+
+        "allow numbers, letters and underscores in names" in {
+            Matcher.path(":path_123/to/resource")
+                .matches(context) must_== true
+        }
+
+        "allow blank names" in {
+            Matcher.path("path/:/:").matches(context) must_== true
+        }
+
+        "not match incorrect patterns" in {
+            Matcher.path("/:one/to").matches(context) must_== false
+            Matcher.path("/:one/:two").matches(context) must_== false
+            Matcher.path("/:1/:2/:3/:4").matches(context) must_== false
+            Matcher.path("/path/:one/other").matches(context) must_== false
+        }
+    }
 }
 

@@ -42,46 +42,84 @@ private case class GlobScanner
 }
 
 /**
+ * A scanner that assigns a name to a wildcard match
+ */
+private case class NamedScanner (
+    private val name: String,
+    private val until: Char,
+    private val next: PathScanner
+) extends PathScanner {
+    override def apply ( path: String ): Boolean
+        = next( path.dropWhile( _ != until ) )
+}
+
+/**
  * Builder methods for constructing a PathScanner
  */
 private object PathScanner {
 
-    private val wildcards = List('*')
+    private val wildcards = List('*', ':')
 
     /**
      * A helper method for building the wildcard portion of a scanner
      */
-    private def buildWildcarded (
+    private def buildGlob (
         pos: Int, pattern: String, parent: PathScanner
     ): PathScanner = {
 
         val length = pattern.length
 
-        // trim any stars off the remaining pattern
-        val remaining = {
-            pattern
-                .take( pos + 1 )
-                .take( pattern.lastIndexWhere( !wildcards.contains(_) ) + 1 )
-        }
-
         // If the wildcard is at the end of the pattern, we don't
         // need a static string comparison scanner
-        val glob = {
-            if ( pos + 1 == length ) {
-                GlobScanner( '/', parent )
-            }
-            else {
-                GlobScanner(
-                    pattern( pos + 1 ),
-                    CompareScanner(
-                        pattern.takeRight( length - pos - 1 ),
-                        parent
-                    )
+        if ( pos + 1 == length ) {
+            GlobScanner( '/', parent )
+        }
+        else {
+            GlobScanner(
+                pattern( pos + 1 ),
+                CompareScanner(
+                    pattern.takeRight( length - pos - 1 ),
+                    parent
                 )
+            )
+        }
+    }
+
+    /**
+     * A helper method for building a named wildcard scanner
+     */
+    private def buildNamed (
+        pos: Int, pattern: String, parent: PathScanner
+    ): PathScanner = {
+
+        // Search rightward from the wildcard position to find all the letters
+        // that constitute the name of this glob
+        val nameEnd = {
+            pattern.indexWhere(
+                (chr) => !Character.isLetterOrDigit(chr) && chr != '_',
+                pos + 1
+            ) match {
+                case -1 => pattern.length
+                case endPos => endPos
             }
         }
 
-        buildScanner( remaining, glob )
+        val name = pattern.substring( pos, nameEnd )
+
+        val length = pattern.length
+
+        // If the name goes to the end of the pattern, we only need
+        // the glob scanner
+        if ( nameEnd == length ) {
+            NamedScanner( name, '/', parent )
+        }
+        else {
+            NamedScanner(
+                name,
+                pattern( nameEnd ) ,
+                CompareScanner( pattern.substring( nameEnd, length ), parent )
+            )
+        }
     }
 
     /**
@@ -100,7 +138,20 @@ private object PathScanner {
             case -1 => CompareScanner( pattern, parent )
 
             // If the pattern DOES contain wildcards, we need a specific scanner
-            case pos => buildWildcarded( pos, pattern, parent );
+            case pos => {
+
+                // trim any stars off the remaining pattern
+                val remaining = pattern.take(
+                    pattern.lastIndexWhere( !wildcards.contains(_), pos ) + 1
+                )
+
+                val wildcardScanner = pattern(pos) match {
+                    case '*' => buildGlob( pos, pattern, parent )
+                    case ':' => buildNamed( pos, pattern, parent )
+                }
+
+                buildScanner( remaining, wildcardScanner )
+            }
         }
     }
 
@@ -115,7 +166,6 @@ private object PathScanner {
  * Matches against the path of a request
  */
 class Path ( path: String ) extends Matcher {
-
 
     /**
      * The path being compared against
