@@ -1,7 +1,6 @@
 package org.skene
 
-import java.util.concurrent.ConcurrentLinkedQueue
-import scala.collection.JavaConversions._
+import org.skene.util.LinkedList
 
 /**
  * Dispatches a request against a set of handlers based on matching rules
@@ -13,12 +12,12 @@ class Dispatcher extends Handler {
     /**
      * A pairing of a matcher and it's handler
      */
-    private case class Entry( val matcher: Matcher, val handler: Handler )
+    private class Entry ( val matcher: Matcher, val handler: Handler )
 
     /**
      * The list of entries collected in this dispatcher
      */
-    private val entries = new ConcurrentLinkedQueue[Entry]
+    private val entries = new LinkedList[Entry]
 
     /**
      * The default handler to use when none of the matchers apply
@@ -58,14 +57,19 @@ class Dispatcher extends Handler {
      */
     override def handle( context: Context ): Response = {
 
-        val matched = entries.iterator.find( _.matcher.matches(context) )
+        val matched = entries.find( entry => {
+            entry.matcher.matches(context) match {
+                case Matcher.Result(false, _) => None
+                case Matcher.Result(true, params) => {
+                    Some( (params, entry.handler) )
+                }
+            }
+        })
 
-        val handler = matched match {
-            case Some(entry) => entry.handler
-            case None => default.getOrElse( unresolvable )
+        matched match {
+            case Some( (params, handler) ) => handler.handle( context )
+            case None => default.getOrElse( unresolvable ).handle( context )
         }
-
-        handler.handle( context )
     }
 
 }

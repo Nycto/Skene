@@ -1,11 +1,22 @@
 package org.skene {
 
     import org.skene.matcher._
+    import scala.collection.immutable.Map
+    import scala.collection.immutable.HashMap
 
     /**
      * Helper methods creating matchers
      */
     object Matcher {
+
+        /**
+         * The results of a matcher pass
+         */
+        case class Result (
+            val passed: Boolean,
+            val params: Map[String, String] = HashMap()
+        )
+
         def path ( path: String ) = new Path(path)
         val always = new Always
         val never = new Never
@@ -18,7 +29,7 @@ package org.skene {
         /**
          * Returns whether a given context matches
          */
-        def matches ( context: Context ): Boolean
+        def matches ( context: Context ): Matcher.Result
     }
 }
 
@@ -34,7 +45,7 @@ package org.skene.matcher {
         /**
          * @see Matcher
          */
-        override def matches ( context: Context ) = true
+        override def matches ( context: Context ) = Matcher.Result(true)
 
         /**
          * Create a readable description of this matcher
@@ -49,7 +60,7 @@ package org.skene.matcher {
         /**
          * @see Matcher
          */
-        override def matches ( context: Context ) = false
+        override def matches ( context: Context ) = Matcher.Result(false)
 
         /**
          * Create a readable description of this matcher

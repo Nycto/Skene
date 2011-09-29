@@ -8,7 +8,7 @@ import org.skene.Matcher
  * The interface for a string of pattern matchers
  */
 private trait PathScanner {
-    def apply ( path: String ): Boolean
+    def apply ( path: String ): Matcher.Result
 }
 
 /**
@@ -16,7 +16,7 @@ private trait PathScanner {
  * by any other scanners leading up to this one
  */
 private case class TerminusScanner () extends PathScanner {
-    override def apply ( path: String ) = path.isEmpty
+    override def apply ( path: String ) = Matcher.Result( path.isEmpty )
 }
 
 /**
@@ -26,8 +26,12 @@ private case class CompareScanner
     ( private val versus: String, private val next: PathScanner )
     extends PathScanner
 {
-    override def apply ( path: String ): Boolean
-        = path.startsWith( versus ) && next( path.drop( versus.length ) )
+    override def apply ( path: String ) = {
+        path.startsWith( versus ) match {
+            case true => next( path.drop( versus.length ) )
+            case false => Matcher.Result(false)
+        }
+    }
 }
 
 /**
@@ -37,8 +41,7 @@ private case class GlobScanner
     ( private val until: Char, private val next: PathScanner )
     extends PathScanner
 {
-    override def apply ( path: String ): Boolean
-        = next( path.dropWhile( _ != until ) )
+    override def apply ( path: String ) = next( path.dropWhile( _ != until ) )
 }
 
 /**
@@ -49,8 +52,7 @@ private case class NamedScanner (
     private val until: Char,
     private val next: PathScanner
 ) extends PathScanner {
-    override def apply ( path: String ): Boolean
-        = next( path.dropWhile( _ != until ) )
+    override def apply ( path: String ) = next( path.dropWhile( _ != until ) )
 }
 
 /**
@@ -180,7 +182,7 @@ class Path ( path: String ) extends Matcher {
     /**
      * @see Matcher
      */
-    override def matches ( context: Context ): Boolean
+    override def matches ( context: Context )
         = scanner( context.url.path.getOrElse("/") )
 
     /**

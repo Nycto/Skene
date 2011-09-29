@@ -9,13 +9,13 @@ class MatcherTest extends Specification with Mockito {
 
     "An Always matcher" should {
         "always return true" in {
-            Matcher.always.matches( mock[Context] ) must_== true
+            Matcher.always.matches( mock[Context] ) must_== Matcher.Result(true)
         }
     }
 
     "A Never matcher" should {
         "always return false" in {
-            Matcher.never.matches( mock[Context] ) must_== false
+            Matcher.never.matches( mock[Context] ) must_== Matcher.Result(false)
         }
     }
 }
