@@ -32,9 +32,14 @@ class PathTest extends Specification with Mockito {
 
         "handle a wildcard at the end of a pattern" in {
             Matcher.path("/path/to/*")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "resource")
+                )
+
             Matcher.path("/path/*/*")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "to", "1" -> "resource")
+                )
         }
 
         "shouldnt consume a trailing slash with a trailing wildcard" in {
@@ -47,27 +52,48 @@ class PathTest extends Specification with Mockito {
 
         "match a path with various wildcard placements" in {
             Matcher.path("/*/to/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "path")
+                )
+
             Matcher.path("/path/*/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "to")
+                )
+
             Matcher.path("/*/*/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "path", "1" -> "to")
+                )
+
             Matcher.path("/*/*/*")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "path", "1" -> "to", "2" -> "resource")
+                )
         }
 
         "not care about multiple wildcards in a row" in {
             Matcher.path("/**/to/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "path")
+                )
+
             Matcher.path("/**/****/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "path", "1" -> "to")
+                )
+
             Matcher.path("/path/**/**")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "to", "1" -> "resource")
+                )
         }
 
         "not care about a leading slash" in {
             Matcher.path("path/to/*")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("0" -> "resource")
+                )
         }
 
         "not match incorrect patterns" in {
@@ -86,33 +112,50 @@ class PathTest extends Specification with Mockito {
 
         "treat a named parameter like a glob" in {
             Matcher.path("/path/to/:name")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("name" -> "resource")
+                )
+
             Matcher.path("/path/:one/:two")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("one" -> "to", "two" -> "resource")
+                )
+
             Matcher.path("/:path/to/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("path" -> "path")
+                )
         }
 
         "ignore extra colons" in {
             Matcher.path("/path/to/:::name")
-                .matches(context) must_== Matcher.Result(true)
-            Matcher.path("/path/::one::/::::two")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("name" -> "resource")
+                )
+
+            Matcher.path("/path/::one::/::::two:")
+                .matches(context) must_== Matcher.Result(
+                    true, Map("one" -> "to", "two" -> "resource")
+                )
         }
 
         "not care about a leading slash" in {
             Matcher.path(":path/to/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("path" -> "path")
+                )
         }
 
         "allow numbers, letters and underscores in names" in {
             Matcher.path(":path_123/to/resource")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(
+                    true, Map("path_123" -> "path")
+                )
         }
 
-        "allow blank names" in {
+        "not allow blank names" in {
             Matcher.path("path/:/:")
-                .matches(context) must_== Matcher.Result(true)
+                .matches(context) must_== Matcher.Result(false)
         }
 
         "not match incorrect patterns" in {

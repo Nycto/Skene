@@ -8,7 +8,11 @@ import org.skene.Matcher
  * The interface for a string of pattern matchers
  */
 private trait PathScanner {
-    def apply ( path: String ): Matcher.Result
+    def apply (
+        path: String, index: Int, params: Map[String, String]
+    ): Matcher.Result
+
+    def apply ( path: String ): Matcher.Result = apply( path, 0, Map() )
 }
 
 /**
@@ -16,7 +20,16 @@ private trait PathScanner {
  * by any other scanners leading up to this one
  */
 private case class TerminusScanner () extends PathScanner {
-    override def apply ( path: String ) = Matcher.Result( path.isEmpty )
+    override def apply (
+        path: String, index: Int, params: Map[String, String]
+    ) = {
+        path.isEmpty match {
+            case true => Matcher.Result( true, params )
+            case false => Matcher.Result( false )
+        }
+    }
+
+    override def toString = "[Terminus]"
 }
 
 /**
@@ -26,11 +39,40 @@ private case class CompareScanner
     ( private val versus: String, private val next: PathScanner )
     extends PathScanner
 {
-    override def apply ( path: String ) = {
+    override def apply (
+        path: String, index: Int, params: Map[String, String]
+    ) = {
         path.startsWith( versus ) match {
-            case true => next( path.drop( versus.length ) )
+            case true => next( path.drop( versus.length ), index, params )
             case false => Matcher.Result(false)
         }
+    }
+
+    override def toString = "[Compare = '" + versus + "'] -> " + next
+}
+
+/**
+ * The base class for path scanners that add to the parameter list
+ */
+abstract private class ParamAddingScanner
+    ( private val until: Char, private val next: PathScanner )
+    extends PathScanner
+{
+    protected def getKey ( index: Int ): String
+
+    override def apply (
+        path: String, index: Int, params: Map[String, String]
+    ) = {
+        val split = path.indexWhere( _ == until ) match {
+            case -1 => path.length()
+            case result => result
+        }
+
+        next(
+            path.drop( split ),
+            index + 1,
+            params + (getKey(index) -> path.take(split))
+        )
     }
 }
 
@@ -39,9 +81,11 @@ private case class CompareScanner
  */
 private case class GlobScanner
     ( private val until: Char, private val next: PathScanner )
-    extends PathScanner
+    extends ParamAddingScanner (until, next)
 {
-    override def apply ( path: String ) = next( path.dropWhile( _ != until ) )
+    protected def getKey ( index: Int ) = index.toString
+
+    override def toString = "[Glob @" + until + "] -> " + next
 }
 
 /**
@@ -51,8 +95,10 @@ private case class NamedScanner (
     private val name: String,
     private val until: Char,
     private val next: PathScanner
-) extends PathScanner {
-    override def apply ( path: String ) = next( path.dropWhile( _ != until ) )
+) extends ParamAddingScanner (until, next) {
+    protected def getKey ( index: Int ) = name
+
+    override def toString = "[Named Glob " + name + "@" + until + "] -> " + next
 }
 
 /**
@@ -106,21 +152,27 @@ private object PathScanner {
             }
         }
 
-        val name = pattern.substring( pos, nameEnd )
+        val name = pattern.substring( pos + 1, nameEnd )
 
         val length = pattern.length
 
         // If the name goes to the end of the pattern, we only need
         // the glob scanner
         if ( nameEnd == length ) {
-            NamedScanner( name, '/', parent )
+            if ( name == "" )
+                parent
+            else
+                NamedScanner( name, '/', parent )
         }
         else {
-            NamedScanner(
-                name,
-                pattern( nameEnd ) ,
-                CompareScanner( pattern.substring( nameEnd, length ), parent )
+            val compare = CompareScanner(
+                pattern.substring( nameEnd, length ), parent
             )
+
+            if ( name == "" )
+                compare
+            else
+                NamedScanner( name, pattern( nameEnd ), compare )
         }
     }
 
@@ -142,15 +194,15 @@ private object PathScanner {
             // If the pattern DOES contain wildcards, we need a specific scanner
             case pos => {
 
-                // trim any stars off the remaining pattern
-                val remaining = pattern.take(
-                    pattern.lastIndexWhere( !wildcards.contains(_), pos ) + 1
-                )
-
                 val wildcardScanner = pattern(pos) match {
                     case '*' => buildGlob( pos, pattern, parent )
                     case ':' => buildNamed( pos, pattern, parent )
                 }
+
+                // trim any stars off the remaining pattern
+                val remaining = pattern.take(
+                    pattern.lastIndexWhere( !wildcards.contains(_), pos ) + 1
+                )
 
                 buildScanner( remaining, wildcardScanner )
             }
@@ -188,6 +240,6 @@ class Path ( path: String ) extends Matcher {
     /**
      * Create a readable description of this matcher
      */
-    override def toString () = "[Path Matcher: " + versus + "]"
+    override def toString () = "[Path Matcher: " + scanner + "]"
 }
 
