@@ -8,7 +8,7 @@ import org.skene._
 class DispatcherTest extends Specification with Mockito {
 
     // A shared context object between the tests
-    val context = mock[Context]
+    val context = BareContext()
 
     // The renderable object that is returned when a test passes
     val response = Response("Pass")

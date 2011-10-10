@@ -30,6 +30,24 @@ trait Context {
 }
 
 /**
+ * The companion for the bare context object
+ */
+object BareContext {
+    def apply (
+        url: URL = URL("http://www.example.com"),
+        params: Map[String, String] = Map()
+    ) = new BareContext( url, params )
+}
+
+/**
+ * A context object that fills in any gaps with default values
+ */
+class BareContext ( _url: URL, _params: Map[String, String] ) extends Context {
+    override val url = _url
+    override val params = _params
+}
+
+/**
  * A context that wraps another context and updates parts of it
  */
 abstract class ContextDecorator

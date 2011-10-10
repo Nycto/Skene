@@ -7,10 +7,9 @@ import org.skene._
 
 class ParameterizedContextTest extends Specification with Mockito {
 
-    val context = new Context {
-        override val url = URL("http://www.example.com")
-        override val params = Map[String, String]("1" -> "A", "2" -> "B")
-    }
+    val context = BareContext (
+        params = Map[String, String]("1" -> "A", "2" -> "B")
+    )
 
     "The Context.withParams method" should {
 
