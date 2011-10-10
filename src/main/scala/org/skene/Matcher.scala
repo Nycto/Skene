@@ -17,9 +17,34 @@ package org.skene {
             val params: Map[String, String] = HashMap()
         )
 
+        /**
+         * Builds a matcher from a path
+         */
         def path ( path: String ) = new Path(path)
+
+        /**
+         * A matcher that will always pass
+         */
         val always = new Always
+
+        /**
+         * A matcher that will never pass
+         */
         val never = new Never
+
+        /**
+         * Builds a matcher from a callback
+         */
+        def call ( call: (Context) => Matcher.Result ) = new Matcher {
+            override def matches ( context: Context ) = call(context)
+        }
+
+        /**
+         * Builds a matcher from a thunk
+         */
+        def call ( call: => Matcher.Result ) = new Matcher {
+            override def matches ( context: Context ) = call
+        }
     }
 
     /**

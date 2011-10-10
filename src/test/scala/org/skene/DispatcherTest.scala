@@ -16,7 +16,7 @@ class DispatcherTest extends Specification with Mockito {
     // A handler that allows itself to be called
     val handlerCallable = {
         val handler = mock[Handler]
-        handler.handle(context) returns response
+        handler.handle( any ) returns response
         handler
     }
 
@@ -49,6 +49,24 @@ class DispatcherTest extends Specification with Mockito {
             }
 
             dispatcher.handle( context ) must_== response
+        }
+
+        "set parameters when a matcher returns them" in {
+
+            val matcher = Matcher.call {
+                Matcher.Result(true, Map("1" -> "a"))
+            }
+
+            val handler = Handler( context => {
+                context.params must_== Map("1" -> "a")
+                response
+            } )
+
+            val dispatcher = (new Dispatcher).add( matcher, handler )
+
+            dispatcher.handle( context )
+
+            success
         }
     }
 

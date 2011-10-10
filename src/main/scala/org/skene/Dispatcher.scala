@@ -67,7 +67,8 @@ class Dispatcher extends Handler {
         })
 
         matched match {
-            case Some( (params, handler) ) => handler.handle( context )
+            case Some( (params, handler) )
+                => handler.handle( context.withParams(params) )
             case None => default.getOrElse( unresolvable ).handle( context )
         }
     }
