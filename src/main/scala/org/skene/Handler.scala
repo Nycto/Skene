@@ -1,6 +1,6 @@
 package org.skene
 
-import org.skene.context.JettyContext
+import org.skene.context.ServletContext
 
 import javax.servlet.http.{HttpServlet,HttpServletRequest,HttpServletResponse}
 
@@ -36,7 +36,7 @@ trait Handler extends HttpServlet {
         // Set some sensible defaults
         response.setContentType("text/html;charset=utf-8")
 
-        val result = handle( new JettyContext( request, response ) )
+        val result = handle( new ServletContext( request ) )
 
         // Change the status code
         response.setStatus( result.code.code )
