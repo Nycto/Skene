@@ -1,6 +1,6 @@
 package org.skene.matcher
 
-import org.skene.Context
+import org.skene.Request
 import org.skene.Matcher
 
 
@@ -234,8 +234,8 @@ class Path ( path: String ) extends Matcher {
     /**
      * @see Matcher
      */
-    override def matches ( context: Context )
-        = scanner( context.url.path.getOrElse("/") )
+    override def matches ( request: Request )
+        = scanner( request.url.path.getOrElse("/") )
 
     /**
      * Create a readable description of this matcher

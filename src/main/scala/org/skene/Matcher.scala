@@ -35,32 +35,32 @@ package org.skene {
         /**
          * Builds a matcher from a callback
          */
-        def call ( call: (Context) => Matcher.Result ) = new Matcher {
-            override def matches ( context: Context ) = call(context)
+        def call ( call: (Request) => Matcher.Result ) = new Matcher {
+            override def matches ( request: Request ) = call(request)
         }
 
         /**
          * Builds a matcher from a thunk
          */
         def call ( call: => Matcher.Result ) = new Matcher {
-            override def matches ( context: Context ) = call
+            override def matches ( request: Request ) = call
         }
     }
 
     /**
-     * A construct for matching patterns against a context
+     * A construct for matching patterns against a request
      */
     trait Matcher {
         /**
-         * Returns whether a given context matches
+         * Returns whether a given request matches
          */
-        def matches ( context: Context ): Matcher.Result
+        def matches ( request: Request ): Matcher.Result
     }
 }
 
 package org.skene.matcher {
 
-    import org.skene.Context
+    import org.skene.Request
     import org.skene.Matcher
 
     /**
@@ -70,7 +70,7 @@ package org.skene.matcher {
         /**
          * @see Matcher
          */
-        override def matches ( context: Context ) = Matcher.Result(true)
+        override def matches ( request: Request ) = Matcher.Result(true)
 
         /**
          * Create a readable description of this matcher
@@ -85,7 +85,7 @@ package org.skene.matcher {
         /**
          * @see Matcher
          */
-        override def matches ( context: Context ) = Matcher.Result(false)
+        override def matches ( request: Request ) = Matcher.Result(false)
 
         /**
          * Create a readable description of this matcher

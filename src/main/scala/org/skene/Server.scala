@@ -4,7 +4,7 @@ import org.eclipse.jetty.server.{Server => JettyServer}
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
-import org.skene.context._
+import org.skene.request._
 
 /**
  * Helper methods for starting a server
@@ -26,7 +26,7 @@ object Server {
     def apply ( port: Int, handler: => Response ): Unit
         = apply( port, Handler(handler) )
 
-    def apply ( port: Int, handler: (Context) => Response ): Unit
+    def apply ( port: Int, handler: (Request) => Response ): Unit
         = apply( port, Handler(handler) )
 
 }

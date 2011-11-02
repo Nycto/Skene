@@ -1,6 +1,6 @@
 package org.skene
 
-import org.skene.context.ServletContext
+import org.skene.request.ServletRequest
 
 import javax.servlet.http.{HttpServlet,HttpServletRequest,HttpServletResponse}
 
@@ -9,7 +9,7 @@ import javax.servlet.http.{HttpServlet,HttpServletRequest,HttpServletResponse}
  */
 object Handler {
 
-    def apply( callback: (Context) => Response ): Handler
+    def apply( callback: (Request) => Response ): Handler
         = new CallbackHandler(callback)
 
     def apply( thunk: => Response ): Handler
@@ -24,7 +24,7 @@ trait Handler extends HttpServlet {
     /**
      * Handles the given request and returns the response data
      */
-    def handle( context: Context ): Response
+    def handle( request: Request ): Response
 
     /**
      * The primary handler for using a handler has a servlet
@@ -36,7 +36,7 @@ trait Handler extends HttpServlet {
         // Set some sensible defaults
         response.setContentType("text/html;charset=utf-8")
 
-        val result = handle( new ServletContext( request ) )
+        val result = handle( new ServletRequest( request ) )
 
         // Change the status code
         response.setStatus( result.code.code )
@@ -69,21 +69,21 @@ trait Handler extends HttpServlet {
  * A helper handler that simply converts a callback into a handler
  */
 class CallbackHandler
-    ( private val callback: (Context) => Response )
+    ( private val callback: (Request) => Response )
     extends Handler
 {
 
     /**
      * An alternate constructor that allows thunks to be used as handlers
      */
-    def this ( thunk: => Response ) = this((context: Context) => {
+    def this ( thunk: => Response ) = this((request: Request) => {
         thunk
     })
 
     /**
      * @see Handler
      */
-    override def handle( context: Context ) = callback(context)
+    override def handle( request: Request ) = callback(request)
 
 }
 

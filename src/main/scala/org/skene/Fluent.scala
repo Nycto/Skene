@@ -11,7 +11,7 @@ class Fluent (
     private val matcher: Matcher
 ) {
 
-    def apply ( callback: (Context) => Response ): Unit
+    def apply ( callback: (Request) => Response ): Unit
         = dispatcher.add( matcher, Handler(callback) )
 
     def apply ( callback: => Response ): Unit
@@ -35,8 +35,8 @@ trait Skene extends Handler {
     /**
      * @see Handler
      */
-    override def handle( context: Context ): Response
-        = dispatcher.handle( context )
+    override def handle( request: Request ): Response
+        = dispatcher.handle( request )
 
     /**
      * Adds a handler for any request matching the given path

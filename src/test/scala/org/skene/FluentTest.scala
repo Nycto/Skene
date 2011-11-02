@@ -20,24 +20,24 @@ class SkeneTest extends Specification with Mockito {
     "A fluent interface" should {
 
         "pick up the index request" in {
-            val context = mock[Context];
-            context.url returns URL("http://example.com")
+            val request = mock[Request];
+            request.url returns URL("http://example.com")
 
-            interface.handle(context) must_== indexPage
+            interface.handle(request) must_== indexPage
         }
 
         "pick up specific pages" in {
-            val context = mock[Context];
-            context.url returns URL("http://example.com/specific")
+            val request = mock[Request];
+            request.url returns URL("http://example.com/specific")
 
-            interface.handle(context) must_== specificPage
+            interface.handle(request) must_== specificPage
         }
 
         "fall back on the default handler when no page matches" in {
-            val context = mock[Context];
-            context.url returns URL("http://example.com/undefined")
+            val request = mock[Request];
+            request.url returns URL("http://example.com/undefined")
 
-            interface.handle(context) must_== defaultPage
+            interface.handle(request) must_== defaultPage
         }
     }
 

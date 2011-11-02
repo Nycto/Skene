@@ -7,8 +7,8 @@ import org.skene._
 
 class DispatcherTest extends Specification with Mockito {
 
-    // A shared context object between the tests
-    val context = BareContext()
+    // A shared request object between the tests
+    val request = BareRequest()
 
     // The renderable object that is returned when a test passes
     val response = Response("Pass")
@@ -23,7 +23,7 @@ class DispatcherTest extends Specification with Mockito {
     // A handler that fails when it is invoked
     val handlerUncallable = {
         val handler = mock[Handler]
-        handler.handle(context) throws new RuntimeException(
+        handler.handle(request) throws new RuntimeException(
             "The wrong Handler was called"
         )
         handler
@@ -37,7 +37,7 @@ class DispatcherTest extends Specification with Mockito {
                     .add( Matcher.always, handlerUncallable )
             }
 
-            dispatcher.handle( context ) must_== response
+            dispatcher.handle( request ) must_== response
         }
 
         "not call handlers when the matcher doesn't pass" in {
@@ -48,7 +48,7 @@ class DispatcherTest extends Specification with Mockito {
                     .add( Matcher.always, handlerCallable )
             }
 
-            dispatcher.handle( context ) must_== response
+            dispatcher.handle( request ) must_== response
         }
 
         "set parameters when a matcher returns them" in {
@@ -57,14 +57,14 @@ class DispatcherTest extends Specification with Mockito {
                 Matcher.Result(true, Map("1" -> "a"))
             }
 
-            val handler = Handler( context => {
-                context.params must_== Map("1" -> "a")
+            val handler = Handler( request => {
+                request.params must_== Map("1" -> "a")
                 response
             } )
 
             val dispatcher = (new Dispatcher).add( matcher, handler )
 
-            dispatcher.handle( context )
+            dispatcher.handle( request )
 
             success
         }

@@ -27,9 +27,9 @@ class Dispatcher extends Handler {
     /**
      * The handler to use when nothing matches and there is no default
      */
-    final lazy private val unresolvable = Handler({ (context) =>
+    final lazy private val unresolvable = Handler({ (request) =>
         <h1>Unresolvable:
-            <span>{context.url.path.getOrElse("/").toString}</span>
+            <span>{request.url.path.getOrElse("/").toString}</span>
         </h1>
     })
 
@@ -55,10 +55,10 @@ class Dispatcher extends Handler {
      * Checks the list of possible handlers and executes
      * the one that matches
      */
-    override def handle( context: Context ): Response = {
+    override def handle( request: Request ): Response = {
 
         val matched = entries.find( entry => {
-            entry.matcher.matches(context) match {
+            entry.matcher.matches(request) match {
                 case Matcher.Result(false, _) => None
                 case Matcher.Result(true, params) => {
                     Some( (params, entry.handler) )
@@ -68,8 +68,8 @@ class Dispatcher extends Handler {
 
         matched match {
             case Some( (params, handler) )
-                => handler.handle( context.withParams(params) )
-            case None => default.getOrElse( unresolvable ).handle( context )
+                => handler.handle( request.withParams(params) )
+            case None => default.getOrElse( unresolvable ).handle( request )
         }
     }
 
