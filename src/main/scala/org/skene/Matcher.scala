@@ -15,7 +15,16 @@ package org.skene {
         case class Result (
             val passed: Boolean,
             val params: Map[String, String] = HashMap()
-        )
+        ) {
+
+            /**
+             * Combines this result with another one
+             */
+            def + ( other: Result ) = Result(
+                passed && other.passed,
+                params ++ other.params
+            )
+        }
 
         /**
          * Builds a matcher from a path
