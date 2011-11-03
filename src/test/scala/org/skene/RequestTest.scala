@@ -21,6 +21,42 @@ class RequestTest extends Specification {
         }
     }
 
+    "The Request Method Accessor methods" should {
+
+        "Respond to the GET method" in {
+            val request = BareRequest( method = Request.Method.GET() )
+            request.isGet must_== true
+            request.isPost must_== false
+            request.isDelete must_== false
+            request.isPut must_== false
+        }
+
+        "Respond to the POST method" in {
+            val request = BareRequest( method = Request.Method.POST() )
+            request.isGet must_== false
+            request.isPost must_== true
+            request.isDelete must_== false
+            request.isPut must_== false
+        }
+
+        "Respond to the DELETE method" in {
+            val request = BareRequest( method = Request.Method.DELETE() )
+            request.isGet must_== false
+            request.isPost must_== false
+            request.isDelete must_== true
+            request.isPut must_== false
+        }
+
+        "Respond to the PUT method" in {
+            val request = BareRequest( method = Request.Method.PUT() )
+            request.isGet must_== false
+            request.isPost must_== false
+            request.isDelete must_== false
+            request.isPut must_== true
+        }
+
+    }
+
     "The Request.Method enum" should {
 
         "be buildable from a string" in {

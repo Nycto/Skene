@@ -74,6 +74,26 @@ trait Request {
     def method: Request.Method
 
     /**
+     * Returns whether this request used the GET method
+     */
+    def isGet: Boolean = method == Request.Method.GET()
+
+    /**
+     * Returns whether this request used the POST method
+     */
+    def isPost: Boolean = method == Request.Method.POST()
+
+    /**
+     * Returns whether this request used the DELETE method
+     */
+    def isDelete: Boolean = method == Request.Method.DELETE()
+
+    /**
+     * Returns whether this request used the PUT method
+     */
+    def isPut: Boolean = method == Request.Method.PUT()
+
+    /**
      * Returns a version of this request with new parameters added
      */
     def withParams ( newParams: Map[String, String] ): Request = {
