@@ -17,6 +17,11 @@ class ServletRequest (
      */
     override lazy val url = new URL( request.getRequestURL.toString )
 
+    /**
+     * The request method
+     */
+    override lazy val method = Request.Method( request.getMethod )
+
 }
 
 

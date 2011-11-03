@@ -1,6 +1,59 @@
 package org.skene
 
 /**
+ * Request companion
+ */
+object Request {
+
+    /**
+     * The base class for the enumeration of HTTP methods
+     */
+    sealed abstract class Method ( override val toString: String )
+
+    /**
+     * The supported list of HTTP methods
+     */
+    object Method {
+
+        // I didn't use Enumeration here for a few reasons:
+        // - The UNKNOWN class would have been a pain to implement
+        // - Custom string parsing was needed to convert everything to upper
+        // - Pattern matching needed to be supported
+
+        case class HEAD() extends Method("HEAD")
+        case class GET() extends Method("GET")
+        case class POST() extends Method("POST")
+        case class PUT() extends Method("PUT")
+        case class DELETE() extends Method("DELETE")
+        case class TRACE() extends Method("TRACE")
+        case class OPTIONS() extends Method("OPTIONS")
+        case class CONNECT() extends Method("CONNECT")
+        case class PATCH() extends Method("PATCH")
+        case class UNKNOWN( method: String ) extends Method("UNKNOWN")
+
+        def apply ( value: String ): Method = value.toUpperCase match {
+            case "HEAD" => HEAD()
+            case "GET" => GET()
+            case "POST" => POST()
+            case "PUT" => PUT()
+            case "DELETE" => DELETE()
+            case "TRACE" => TRACE()
+            case "OPTIONS" => OPTIONS()
+            case "CONNECT" => CONNECT()
+            case "PATCH" => PATCH()
+            case _ => UNKNOWN( value )
+        }
+
+        val values: List[Method] = List(
+            HEAD(), GET(), POST(), PUT(), DELETE(),
+            TRACE(), OPTIONS(), CONNECT(), PATCH()
+        )
+
+    }
+
+}
+
+/**
  * The data associated with a request
  */
 trait Request {
@@ -14,6 +67,11 @@ trait Request {
      * Any parameters associated with the request
      */
     def params: Map[String, String] = Map()
+
+    /**
+     * The HTTP Request method for this request. I.e. GET, POST, PUT, DELETE
+     */
+    def method: Request.Method
 
     /**
      * Returns a version of this request with new parameters added
@@ -35,17 +93,19 @@ trait Request {
 object BareRequest {
     def apply (
         url: URL = URL("http://www.example.com"),
-        params: Map[String, String] = Map()
-    ) = new BareRequest( url, params )
+        params: Map[String, String] = Map(),
+        method: Request.Method = Request.Method.GET()
+    ) = new BareRequest( url, params, method )
 }
 
 /**
  * A request object that fills in any gaps with default values
  */
-class BareRequest ( _url: URL, _params: Map[String, String] ) extends Request {
-    override val url = _url
-    override val params = _params
-}
+class BareRequest (
+    override val url: URL,
+    override val params: Map[String, String],
+    override val method: Request.Method
+) extends Request
 
 /**
  * A request that wraps another request and updates parts of it
@@ -54,16 +114,9 @@ abstract class RequestDecorator
     ( private val inner: Request )
     extends Request
 {
-
-    /**
-     * @see Request
-     */
-    override def url: URL = inner.url
-
-    /**
-     * @see Request
-     */
-    override def params: Map[String, String] = inner.params
+    override def url = inner.url
+    override def params = inner.params
+    override def method = inner.method
 }
 
 /**
