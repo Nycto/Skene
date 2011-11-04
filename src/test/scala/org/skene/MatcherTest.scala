@@ -25,22 +25,5 @@ class MatcherTest extends Specification {
 
     }
 
-    "An Always matcher" should {
-        "always return true" in {
-            Matcher.always.matches( request ) must_== Matcher.Result(true)
-        }
-
-        "include any parameters it was given" in {
-            Matcher.always("1" -> "one")
-                .matches(request) must_== Matcher.Result(true, "1" -> "one")
-        }
-    }
-
-    "A Never matcher" should {
-        "always return false" in {
-            Matcher.never.matches( request ) must_== Matcher.Result(false)
-        }
-    }
-
 }
 
