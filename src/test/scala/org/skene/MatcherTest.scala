@@ -18,8 +18,8 @@ class MatcherTest extends Specification {
         }
 
         "Combine the parameters" in {
-            ( Matcher.Result(true, Map("1" -> "one", "2" -> "two"))
-                + Matcher.Result(true, Map("2" -> "deux", "3" -> "trois"))
+            ( Matcher.Result(true, "1" -> "one", "2" -> "two")
+                + Matcher.Result(true, "2" -> "deux", "3" -> "trois")
             ).params must_== Map("1" -> "one", "2" -> "deux", "3" -> "trois")
         }
 
@@ -32,7 +32,7 @@ class MatcherTest extends Specification {
 
         "include any parameters it was given" in {
             Matcher.always("1" -> "one")
-                .matches(request) must_== Matcher.Result(true, Map("1" -> "one"))
+                .matches(request) must_== Matcher.Result(true, "1" -> "one")
         }
     }
 

@@ -10,11 +10,19 @@ package org.skene {
     object Matcher {
 
         /**
+         * Result Companion
+         */
+        object Result {
+            def apply ( passed: Boolean, params: (String, String)* )
+                = new Result( passed, Map( params:_* ) )
+        }
+
+        /**
          * The results of a matcher pass
          */
         case class Result (
             val passed: Boolean,
-            val params: Map[String, String] = HashMap()
+            val params: Map[String, String] = Map()
         ) {
 
             /**
