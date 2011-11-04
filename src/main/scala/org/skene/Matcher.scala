@@ -54,6 +54,11 @@ object Matcher {
     def and ( matcher: Matcher* ) = new And( matcher.toList )
 
     /**
+     * A matcher that looks at the HTTP Request method of a request
+     */
+    def method ( method: Request.Method ) = new Method( method );
+
+    /**
      * Builds a matcher from a callback
      */
     def call ( call: (Request) => Matcher.Result ) = new Matcher {
