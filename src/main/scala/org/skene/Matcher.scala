@@ -35,6 +35,7 @@ package org.skene {
          * A matcher that will always pass
          */
         val always = new Always
+        def always ( params: (String, String)* ) = new Always( Map(params:_*) )
 
         /**
          * A matcher that will never pass
@@ -75,11 +76,14 @@ package org.skene.matcher {
     /**
      * A matcher that always passes
      */
-    class Always extends Matcher {
+    class Always (
+        private val params: Map[String,String] = Map()
+    ) extends Matcher {
+
         /**
          * @see Matcher
          */
-        override def matches ( request: Request ) = Matcher.Result(true)
+        override def matches ( request: Request ) = Matcher.Result(true, params)
 
         /**
          * Create a readable description of this matcher
