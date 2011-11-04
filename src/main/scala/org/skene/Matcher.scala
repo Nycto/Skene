@@ -1,8 +1,6 @@
 package org.skene
 
 import org.skene.matcher._
-import scala.collection.immutable.Map
-import scala.collection.immutable.HashMap
 
 /**
  * Helper methods creating matchers
@@ -49,6 +47,11 @@ object Matcher {
      * A matcher that will never pass
      */
     val never = new Never
+
+    /**
+     * A matcher passes when any nested matchers pass
+     */
+    def and ( matcher: Matcher* ) = new And( matcher.toList )
 
     /**
      * Builds a matcher from a callback
