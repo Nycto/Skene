@@ -18,21 +18,32 @@ class RenderableTest extends Specification with Mockito {
     }
 
     "Renderable objects" should {
+
         "render from a String" in {
             assertRenders( Renderable("<p>Data</p>") )
         }
+
         "render from a StringBuilder" in {
             assertRenders( Renderable( new StringBuilder("<p>Data</p>") ) )
         }
+
         "render from a StringBuffer" in {
             assertRenders( Renderable( new StringBuffer("<p>Data</p>") ) )
         }
-        "render from a Thunk" in {
+
+        "render from a Callback" in {
             assertRenders( Renderable(() => { "<p>Data</p>" }) )
         }
+
+        "render from a Callback that uses a Writer" in {
+            assertRenders( Renderable( _.write("<p>Data</p>") ) )
+        }
+
         "render from an XML block" in {
             assertRenders( Renderable(<p>Data</p>) )
         }
+
     }
+
 }
 
