@@ -105,7 +105,22 @@ trait Skene extends Handler {
     /**
      * Sets up a handler for the root directory
      */
-    lazy val index: Fluent = new Fluent( dispatcher, Matcher.path("/") )
+    lazy val index: Fluent = request("/")
+
+    /**
+     * Uses a custom callback as a matcher
+     */
+    def when ( callback: Request => Boolean ) = {
+        new Fluent( dispatcher, Matcher.call { request =>
+            Matcher.Result( callback(request) )
+        } )
+    }
+
+    /**
+     * Uses a custom thunk as a matcher
+     */
+    def when ( callback: => Boolean )
+        = new Fluent( dispatcher, Matcher.call { Matcher.Result( callback ) } )
 }
 
 

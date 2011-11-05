@@ -115,5 +115,31 @@ class SkeneTest extends Specification {
         }
     }
 
+    "The 'when' method" should {
+
+        "match when the callback returns true" in {
+            val interface = new Skene {
+                when { req => true } { page }
+            }
+            interface.handle( BareRequest() ) must_== page
+        }
+
+        "be skipped when the callback returns false" in {
+            val interface = new Skene {
+                when { req => false } { other }
+                default { page }
+            }
+            interface.handle( BareRequest() ) must_== page
+        }
+
+        "allow thunks to be passed in" in {
+            val interface = new Skene {
+                when { true } { page }
+            }
+            interface.handle( BareRequest() ) must_== page
+        }
+
+    }
+
 }
 
