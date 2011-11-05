@@ -33,6 +33,14 @@ trait Skene extends Handler {
          */
         def and ( other: Fluent ): Fluent
             = new Fluent( Matcher.and(matcher, other.matcher) )
+
+        /**
+         * Builds a new Fluent matcher that will match when either this
+         * or another matcher pass
+         */
+        def or ( other: Fluent ): Fluent
+            = new Fluent( Matcher.or(matcher, other.matcher) )
+
     }
 
     /**

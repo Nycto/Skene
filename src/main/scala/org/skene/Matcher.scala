@@ -54,6 +54,11 @@ object Matcher {
     def and ( matcher: Matcher* ) = new And( matcher.toList )
 
     /**
+     * A matcher passes when one of a nested list of matchers pass
+     */
+    def or ( matcher: Matcher* ) = new Or( matcher.toList )
+
+    /**
      * A matcher that looks at the HTTP Request method of a request
      */
     def method ( method: Request.Method ) = new Method( method );

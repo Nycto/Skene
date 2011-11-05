@@ -58,5 +58,32 @@ class LogicTest extends Specification {
 
     }
 
+    "An Or matcher" should {
+
+        "fail when empty" in {
+            val matcher = Matcher.or()
+            matcher.matches( request ) must_== Matcher.Result(false)
+        }
+
+        "Pass when any of the contained matchers pass" in {
+            val matcher = Matcher.or(
+                Matcher.never,
+                Matcher.never,
+                Matcher.always( "1" -> "2" ),
+                Matcher.call( (req) => {
+                    throw new RuntimeException("Did not Short Circuit")
+                })
+            )
+
+            matcher.matches(request) must_== Matcher.Result(true, "1" -> "2")
+        }
+
+        "Fail when all of the contained matchers fail" in {
+            val matcher = Matcher.or( Matcher.never, Matcher.never )
+            matcher.matches(request) must_== Matcher.Result(false)
+        }
+
+    }
+
 }
 
