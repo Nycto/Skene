@@ -4,32 +4,6 @@ import org.skene._
 
 
 /**
- * A helper class for fluently building a dispatcher
- */
-class Fluent (
-    private val dispatcher: Dispatcher,
-    private val matcher: Matcher
-) {
-
-    def apply ( callback: (Request) => Response ): Unit
-        = dispatcher.add( matcher, Handler(callback) )
-
-    def apply ( callback: => Response ): Unit
-        = dispatcher.add( matcher, Handler(callback) )
-
-    def apply ( handler: Handler ): Unit
-        = dispatcher.add( matcher, handler )
-
-    /**
-     * Builds a new Fluent matcher that requires this matcher and another
-     * to both pass
-     */
-    def and ( other: Fluent ): Fluent
-        = new Fluent( dispatcher, Matcher.and(matcher, other.matcher) )
-}
-
-
-/**
  * A fluent interface for building Skene dispatchers
  */
 trait Skene extends Handler {
@@ -38,6 +12,28 @@ trait Skene extends Handler {
      * The dispatcher to collect into
      */
     private val dispatcher = new Dispatcher
+
+    /**
+     * A helper class for fluently building a dispatcher
+     */
+    class Fluent ( private val matcher: Matcher ) {
+
+        def apply ( callback: (Request) => Response ): Unit
+            = dispatcher.add( matcher, Handler(callback) )
+
+        def apply ( callback: => Response ): Unit
+            = dispatcher.add( matcher, Handler(callback) )
+
+        def apply ( handler: Handler ): Unit
+            = dispatcher.add( matcher, handler )
+
+        /**
+         * Builds a new Fluent matcher that requires this matcher and another
+         * to both pass
+         */
+        def and ( other: Fluent ): Fluent
+            = new Fluent( Matcher.and(matcher, other.matcher) )
+    }
 
     /**
      * @see Handler
@@ -49,13 +45,13 @@ trait Skene extends Handler {
      * Adds a handler for any request matching the given path
      */
     def request ( path: String ): Fluent
-        = new Fluent( dispatcher, Matcher.path(path) )
+        = new Fluent( Matcher.path(path) )
 
     /**
      * A helper method for building method specific handlers
      */
     def method ( method: Request.Method ): Fluent
-        = new Fluent( dispatcher, Matcher.method( method ) )
+        = new Fluent( Matcher.method( method ) )
 
     /**
      * Applies a handler for GET requests
@@ -100,7 +96,7 @@ trait Skene extends Handler {
     /**
      * Sets up a default handler
      */
-    lazy val default: Fluent = new Fluent( dispatcher, Matcher.always )
+    lazy val default: Fluent = new Fluent( Matcher.always )
 
     /**
      * Sets up a handler for the root directory
@@ -111,7 +107,7 @@ trait Skene extends Handler {
      * Uses a custom callback as a matcher
      */
     def when ( callback: Request => Boolean ) = {
-        new Fluent( dispatcher, Matcher.call { request =>
+        new Fluent( Matcher.call { request =>
             Matcher.Result( callback(request) )
         } )
     }
@@ -120,7 +116,8 @@ trait Skene extends Handler {
      * Uses a custom thunk as a matcher
      */
     def when ( callback: => Boolean )
-        = new Fluent( dispatcher, Matcher.call { Matcher.Result( callback ) } )
+        = new Fluent( Matcher.call { Matcher.Result( callback ) } )
+
 }
 
 
