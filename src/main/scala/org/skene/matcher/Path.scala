@@ -5,14 +5,56 @@ import org.skene.Matcher
 
 
 /**
+ * Collects the bundle of information required for the PathScanners
+ * to do their work
+ */
+case class ScannerBundle(
+    val path: String,
+    val index: Int = 0,
+    val params: Map[String, String] = Map()
+) {
+
+    /**
+     * Creates a new bundle based on this one with the given path.
+     */
+    def path ( path: String ) = ScannerBundle( path, index, params )
+
+    /**
+     * Drops a number of characters from the right hand side of the path
+     */
+    def drop ( count: Int )
+        = ScannerBundle( path.drop(count), index, params )
+
+    /**
+     * Copies this bundle and increments the index.
+     */
+    def inc = ScannerBundle(path, index + 1, params)
+
+    /**
+     * Adds a parameter to this bundle
+     */
+    def add ( param: (String, String) )
+        = ScannerBundle(path, index, params + param )
+
+}
+
+
+/**
  * The interface for a string of pattern matchers
  */
 private trait PathScanner {
-    def apply (
-        path: String, index: Int, params: Map[String, String]
-    ): Matcher.Result
 
-    def apply ( path: String ): Matcher.Result = apply( path, 0, Map() )
+    /**
+     * Scans the given bundle and determines if it matches the configuration
+     * of this path scanner
+     */
+    def apply ( bundle: ScannerBundle ): Matcher.Result
+
+    /**
+     * Scans the given path to determine if it matches this configuration.
+     */
+    def apply ( path: String ): Matcher.Result = apply( ScannerBundle(path) )
+
 }
 
 /**
@@ -20,58 +62,62 @@ private trait PathScanner {
  * by any other scanners leading up to this one
  */
 private case class TerminusScanner () extends PathScanner {
-    override def apply (
-        path: String, index: Int, params: Map[String, String]
-    ) = {
-        path.isEmpty match {
-            case true => Matcher.Result( true, params )
+
+    /** {@inheritDoc} */
+    override def apply ( bundle: ScannerBundle ) = {
+        bundle.path.isEmpty match {
+            case true => Matcher.Result( true, bundle.params )
             case false => Matcher.Result( false )
         }
     }
 
+    /** {@inheritDoc} */
     override def toString = "[Terminus]"
+
 }
 
 /**
  * A scanner that does a straight comparison of a path to a given
  */
-private case class CompareScanner
-    ( private val versus: String, private val next: PathScanner )
-    extends PathScanner
-{
-    override def apply (
-        path: String, index: Int, params: Map[String, String]
-    ) = {
-        path.startsWith( versus ) match {
-            case true => next( path.drop( versus.length ), index, params )
+private case class CompareScanner (
+    private val versus: String,
+    private val next: PathScanner
+) extends PathScanner {
+
+    /** {@inheritDoc} */
+    override def apply ( bundle: ScannerBundle ) = {
+        bundle.path.startsWith( versus ) match {
+            case true => next( bundle.drop(versus.length) )
             case false => Matcher.Result(false)
         }
     }
 
+    /** {@inheritDoc} */
     override def toString = "[Compare = '" + versus + "'] -> " + next
+
 }
 
 /**
  * The base class for path scanners that add to the parameter list
  */
-abstract private class ParamAddingScanner
-    ( private val until: Char, private val next: PathScanner )
-    extends PathScanner
-{
-    protected def getKey ( index: Int ): String
+abstract private class ParamAddingScanner (
+    private val until: Char,
+    private val next: PathScanner
+) extends PathScanner {
 
-    override def apply (
-        path: String, index: Int, params: Map[String, String]
-    ) = {
-        val split = path.indexWhere( _ == until ) match {
-            case -1 => path.length()
+    protected def getKey ( bundle: ScannerBundle ): String
+
+    override def apply ( bundle: ScannerBundle ) = {
+        val split = bundle.path.indexWhere( _ == until ) match {
+            case -1 => bundle.path.length()
             case result => result
         }
 
         next(
-            path.drop( split ),
-            index + 1,
-            params + (getKey(index) -> path.take(split))
+            bundle
+              .drop(split)
+              .inc
+              .add( getKey(bundle) -> bundle.path.take(split) )
         )
     }
 }
@@ -79,11 +125,12 @@ abstract private class ParamAddingScanner
 /**
  * A scanner that ungreedily consumes any characters it can
  */
-private case class GlobScanner
-    ( private val until: Char, private val next: PathScanner )
-    extends ParamAddingScanner (until, next)
-{
-    protected def getKey ( index: Int ) = index.toString
+private case class GlobScanner (
+    private val until: Char,
+    private val next: PathScanner
+) extends ParamAddingScanner (until, next) {
+
+    protected def getKey ( bundle: ScannerBundle ) = bundle.index.toString
 
     override def toString = "[Glob @" + until + "] -> " + next
 }
@@ -96,8 +143,11 @@ private case class NamedScanner (
     private val until: Char,
     private val next: PathScanner
 ) extends ParamAddingScanner (until, next) {
-    protected def getKey ( index: Int ) = name
 
+    /** {@inheritDoc} */
+    protected def getKey ( bundle: ScannerBundle ) = name
+
+    /** {@inheritDoc} */
     override def toString = "[Named Glob " + name + "@" + until + "] -> " + next
 }
 
@@ -105,8 +155,6 @@ private case class NamedScanner (
  * Builder methods for constructing a PathScanner
  */
 private object PathScanner {
-
-    private val wildcards = List('*', ':')
 
     /**
      * A helper method for building the wildcard portion of a scanner
@@ -186,6 +234,8 @@ private object PathScanner {
         pattern: String, parent: PathScanner
     ): PathScanner = {
 
+        val wildcards = Set('*', ':')
+
         pattern.lastIndexWhere( wildcards.contains(_) ) match {
 
             // If the pattern doesn't contain any wildcards
@@ -214,6 +264,7 @@ private object PathScanner {
      */
     def apply ( pattern: String ): PathScanner
         = buildScanner( pattern, TerminusScanner() )
+
 }
 
 /**
