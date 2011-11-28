@@ -27,11 +27,21 @@ class Dispatcher extends Handler {
     /**
      * The handler to use when nothing matches and there is no default
      */
-    final lazy private val unresolvable = Handler({ (request) =>
-        <h1>Unresolvable:
-            <span>{request.url.path.getOrElse("/").toString}</span>
-        </h1>
-    })
+    final lazy private val unresolvable = Handler{ (request) =>
+        Response.html(
+            <html>
+                <head><title>404 Not Found</title></head>
+                <body>
+                    <h1>404 Not Found</h1>
+                    <p>
+                        The requested resource could not be located:
+                        <span>{request.url.path.getOrElse("/").toString}</span>
+                    </p>
+                </body>
+            </html>,
+            Response.NotFound
+        )
+    }
 
     /**
      * Adds a matcher/handler pair to this Dispatcher
