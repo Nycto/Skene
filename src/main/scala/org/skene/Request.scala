@@ -103,8 +103,12 @@ trait Request {
         }
     }
 
+    /**
+     * Returns a version of this request with new parameters added
+     */
     def withParams( newParams: (String, String)* ): Request
         = withParams( newParams.toMap )
+
 }
 
 /**

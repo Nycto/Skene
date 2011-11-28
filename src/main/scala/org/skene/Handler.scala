@@ -9,11 +9,18 @@ import javax.servlet.http.{HttpServlet,HttpServletRequest,HttpServletResponse}
  */
 object Handler {
 
+    /**
+     * Creates a handler from a callback
+     */
     def apply( callback: (Request) => Response ): Handler
         = new CallbackHandler(callback)
 
+    /**
+     * Creates a handler from a thunk
+     */
     def apply( thunk: => Response ): Handler
         = new CallbackHandler(thunk)
+
 }
 
 /**
@@ -33,10 +40,13 @@ trait Handler extends HttpServlet {
         request: HttpServletRequest, response: HttpServletResponse
     ): Unit = {
 
-        // Set some sensible defaults
-        response.setContentType("text/html;charset=utf-8")
+        val wrappedReq = new ServletRequest( request )
 
-        val result = handle( new ServletRequest( request ) )
+        val result = handle( wrappedReq )
+            .addHeader(
+                Response.Header.ContentType(),
+                Response.ContentType.Html()
+            )
 
         // Change the status code
         response.setStatus( result.code.code )
@@ -50,14 +60,14 @@ trait Handler extends HttpServlet {
     }
 
     /**
-     * @see HttpServlet
+     * {@inheritDoc}
      */
     override def doGet (
         request: HttpServletRequest, response: HttpServletResponse
     ): Unit = doRequest( request, response )
 
     /**
-     * @see HttpServlet
+     * {@inheritDoc}
      */
     override def doPost (
         request: HttpServletRequest, response: HttpServletResponse
@@ -81,7 +91,7 @@ class CallbackHandler
     })
 
     /**
-     * @see Handler
+     * {@inheritDoc}
      */
     override def handle( request: Request ) = callback(request)
 
