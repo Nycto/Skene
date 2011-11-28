@@ -98,16 +98,70 @@ private case class CompareScanner (
 }
 
 /**
- * The base class for path scanners that add to the parameter list
+ * A set of objects oriented towards scanning Globs out of a path.
  */
-abstract private class ParamAddingScanner (
-    private val until: Char,
-    private val next: PathScanner
-) extends PathScanner {
+private object Glob {
 
-    protected def getKey ( bundle: ScannerBundle ): String
+    /**
+     * A scanner that ungreedily consumes any characters it can
+     */
+    abstract class Config {
 
-    override def apply ( bundle: ScannerBundle ) = {
+        /**
+         * Returns the key to use for the given bundle info
+         */
+        def key ( bundle: ScannerBundle ): String
+
+        /**
+         * Returns a string representation of this config
+         */
+        def toString ( until: Char ): String
+
+    }
+
+    /**
+     * The config info for a named glob scanner
+     */
+    class Named ( val name: String ) extends Config {
+
+        /** {@inheritDoc} */
+        override def key ( bundle: ScannerBundle ) = name
+
+        /** {@inheritDoc} */
+        override def toString( until: Char )
+            = "Named Glob %s @%s".format(name, until)
+
+    }
+
+    /**
+     * The config info an indexed glob
+     */
+    class Indexed extends Config {
+
+        /** {@inheritDoc} */
+        override def key ( bundle: ScannerBundle ) = bundle.index.toString
+
+        /** {@inheritDoc} */
+        override def toString( until: Char ) = "Glob @" + until
+
+    }
+
+    /**
+     * The signature for callbacks that can be used to scan a path
+     */
+    type ScanCallback
+        = ( PathScanner, Char, String, ScannerBundle ) => Matcher.Result
+
+    /**
+     * A non-greedy glob path scanner
+     */
+    def Ungreedy (
+        next: PathScanner,
+        until: Char,
+        key: String,
+        bundle: ScannerBundle
+    ): Matcher.Result = {
+
         val split = bundle.path.indexWhere( _ == until ) match {
             case -1 => bundle.path.length()
             case result => result
@@ -115,40 +169,37 @@ abstract private class ParamAddingScanner (
 
         next(
             bundle
-              .drop(split)
-              .inc
-              .add( getKey(bundle) -> bundle.path.take(split) )
+                .drop(split)
+                .inc
+                .add( key -> bundle.path.take(split) )
         )
     }
-}
 
-/**
- * A scanner that ungreedily consumes any characters it can
- */
-private case class GlobScanner (
-    private val until: Char,
-    private val next: PathScanner
-) extends ParamAddingScanner (until, next) {
+    /**
+     * A non-greedy glob path scanner
+     */
+    class Scanner (
+        private val until: Char,
+        private val config: Glob.Config,
+        scan: ScanCallback,
+        private val next: PathScanner
+    ) extends PathScanner {
 
-    protected def getKey ( bundle: ScannerBundle ) = bundle.index.toString
+        /**
+         * The partially applied scan callback
+         */
+        private val appliedScan = scan(next, until, _:String, _:ScannerBundle)
 
-    override def toString = "[Glob @" + until + "] -> " + next
-}
+        /** {@inheritDoc} */
+        override def apply ( bundle: ScannerBundle )
+            = appliedScan( config.key(bundle), bundle )
 
-/**
- * A scanner that assigns a name to a wildcard match
- */
-private case class NamedScanner (
-    private val name: String,
-    private val until: Char,
-    private val next: PathScanner
-) extends ParamAddingScanner (until, next) {
+        /** {@inheritDoc} */
+        override def toString
+            = "[%s] -> %s".format(config.toString(until), next)
 
-    /** {@inheritDoc} */
-    protected def getKey ( bundle: ScannerBundle ) = name
+    }
 
-    /** {@inheritDoc} */
-    override def toString = "[Named Glob " + name + "@" + until + "] -> " + next
 }
 
 /**
@@ -168,11 +219,13 @@ private object PathScanner {
         // If the wildcard is at the end of the pattern, we don't
         // need a static string comparison scanner
         if ( pos + 1 == length ) {
-            GlobScanner( '/', parent )
+            new Glob.Scanner( '/', new Glob.Indexed, Glob.Ungreedy, parent )
         }
         else {
-            GlobScanner(
+            new Glob.Scanner(
                 pattern( pos + 1 ),
+                new Glob.Indexed,
+                Glob.Ungreedy,
                 CompareScanner(
                     pattern.takeRight( length - pos - 1 ),
                     parent
@@ -207,20 +260,27 @@ private object PathScanner {
         // If the name goes to the end of the pattern, we only need
         // the glob scanner
         if ( nameEnd == length ) {
-            if ( name == "" )
-                parent
-            else
-                NamedScanner( name, '/', parent )
+            name match {
+                case "" => parent
+                case _ => new Glob.Scanner(
+                    '/', new Glob.Named(name), Glob.Ungreedy, parent
+                )
+            }
         }
         else {
             val compare = CompareScanner(
                 pattern.substring( nameEnd, length ), parent
             )
 
-            if ( name == "" )
-                compare
-            else
-                NamedScanner( name, pattern( nameEnd ), compare )
+            name match {
+                case "" => compare
+                case _ => new Glob.Scanner(
+                    pattern( nameEnd ),
+                    new Glob.Named(name),
+                    Glob.Ungreedy,
+                    compare
+                )
+            }
         }
     }
 
@@ -244,15 +304,20 @@ private object PathScanner {
             // If the pattern DOES contain wildcards, we need a specific scanner
             case pos => {
 
+                // If the wildcard repeats, calculate the position that it
+                // repeats to
+                val repeatsTo = 1 + pattern.lastIndexWhere(
+                    !wildcards.contains(_),
+                    pos
+                )
+
                 val wildcardScanner = pattern(pos) match {
                     case '*' => buildGlob( pos, pattern, parent )
                     case ':' => buildNamed( pos, pattern, parent )
                 }
 
-                // trim any stars off the remaining pattern
-                val remaining = pattern.take(
-                    pattern.lastIndexWhere( !wildcards.contains(_), pos ) + 1
-                )
+                // trim any repeated wildcards off the remaining pattern
+                val remaining = pattern.take( repeatsTo )
 
                 buildScanner( remaining, wildcardScanner )
             }

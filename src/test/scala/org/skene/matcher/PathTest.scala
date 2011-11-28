@@ -152,6 +152,11 @@ class PathTest extends Specification with Mockito {
         "not allow blank names" in {
             Matcher.path("path/:/:")
                 .matches(request) must_== Matcher.Result(false)
+
+            Matcher.path("/path/:one:/:two:")
+                .matches(request) must_== Matcher.Result(
+                    true, "one" -> "to", "two" -> "resource"
+                )
         }
 
         "not match incorrect patterns" in {
