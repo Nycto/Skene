@@ -109,6 +109,11 @@ trait Request {
     def withParams( newParams: (String, String)* ): Request
         = withParams( newParams.toMap )
 
+    /**
+     * {@inheritDoc}
+     */
+    override def toString: String = "[Request %s %s]".format( method, url )
+
 }
 
 /**

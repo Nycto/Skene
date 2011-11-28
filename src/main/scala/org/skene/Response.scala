@@ -195,5 +195,15 @@ class Response (
      */
     def isHtml = contentType( Response.ContentType.Html() )
 
+    /**
+     * {@inheritDoc}
+     */
+    override def toString: String = {
+        "[Response %s {%s}]".format(
+            code.code,
+            headers.map( (h) => h._1 + ": " + h._2 ).mkString(", ")
+        )
+    }
+
 }
 

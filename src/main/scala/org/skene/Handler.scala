@@ -29,6 +29,11 @@ object Handler {
 trait Handler extends HttpServlet {
 
     /**
+     * The default logger to be overridden.
+     */
+    protected val logger = Logger.logger
+
+    /**
      * Handles the given request and returns the response data
      */
     def handle( request: Request ): Response
@@ -41,12 +46,15 @@ trait Handler extends HttpServlet {
     ): Unit = {
 
         val wrappedReq = new ServletRequest( request )
+        logger.request( wrappedReq )
 
         val result = handle( wrappedReq )
             .addHeader(
                 Response.Header.ContentType(),
                 Response.ContentType.Html()
             )
+
+        logger.response( result )
 
         // Change the status code
         response.setStatus( result.code.code )

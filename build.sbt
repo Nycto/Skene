@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
     "org.eclipse.jetty" % "jetty-webapp" % "8.0.1.v20110908" % "test,compile",
     "org.eclipse.jetty" % "jetty-server" % "8.0.1.v20110908" % "test,compile",
     "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided->default",
+    "org.slf4j" % "slf4j-simple" % "1.6.4" % "test,compile",
     "junit" % "junit" % "4.9" % "test",
     "org.specs2" %% "specs2" % "1.6.1" % "test",
     "org.specs2" %% "specs2-scalaz-core" % "6.0.1" % "test",
