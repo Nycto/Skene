@@ -39,7 +39,7 @@ class Dispatcher extends Handler {
                     </p>
                 </body>
             </html>,
-            Response.NotFound
+            Response.Code.NotFound()
         )
     }
 
