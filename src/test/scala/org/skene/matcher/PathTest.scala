@@ -28,7 +28,7 @@ class PathTest extends Specification with Mockito {
         }
     }
 
-    "A Path matcher with wildcards" should {
+    "A Path matcher with ungreedy wildcards" should {
 
         "handle a wildcard at the end of a pattern" in {
             Matcher.path("/path/to/*")
@@ -70,21 +70,6 @@ class PathTest extends Specification with Mockito {
                 )
         }
 
-        "not care about multiple wildcards in a row" in {
-            Matcher.path("/**/to/resource")
-                .matches(request) must_== Matcher.Result( true, "0" -> "path" )
-
-            Matcher.path("/**/****/resource")
-                .matches(request) must_== Matcher.Result(
-                    true, "0" -> "path", "1" -> "to"
-                )
-
-            Matcher.path("/path/**/**")
-                .matches(request) must_== Matcher.Result(
-                    true, "0" -> "to", "1" -> "resource"
-                )
-        }
-
         "not care about a leading slash" in {
             Matcher.path("path/to/*")
                 .matches(request) must_== Matcher.Result(
@@ -100,6 +85,84 @@ class PathTest extends Specification with Mockito {
             Matcher.path("/*/*/*/*")
                 .matches(request) must_== Matcher.Result(false)
             Matcher.path("/path/*/other")
+                .matches(request) must_== Matcher.Result(false)
+        }
+    }
+
+    "A Path matcher with greedy wildcards" should {
+
+        "handle wildcards at the end of a pattern" in {
+            Matcher.path("/path/to/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "resource"
+                )
+
+            Matcher.path("/path/**/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "to", "1" -> "resource"
+                )
+        }
+
+        "consume a trailing slash" in {
+            val trailing = mock[Request];
+            trailing.url returns URL("http://example.com/path/to/resource/")
+
+            Matcher.path("/path/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "to/resource"
+                )
+        }
+
+        "match a path with various wildcard placements" in {
+            Matcher.path("/**/to/resource")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "path"
+                )
+
+            Matcher.path("/path/**/resource")
+                .matches(request) must_== Matcher.Result( true, "0" -> "to" )
+
+            Matcher.path("/**/**/resource")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "path", "1" -> "to"
+                )
+
+            Matcher.path("/**/**/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "path", "1" -> "to", "2" -> "resource"
+                )
+        }
+
+        "consume paths past its delimiter" in {
+            Matcher.path("/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "path/to/resource"
+                )
+
+            Matcher.path("/**/resource")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "path/to"
+                )
+
+            Matcher.path("/path/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "to/resource"
+                )
+        }
+
+        "not care about a leading slash" in {
+            Matcher.path("path/to/**")
+                .matches(request) must_== Matcher.Result(
+                    true, "0" -> "resource"
+                )
+        }
+
+        "not match incorrect patterns" in {
+            Matcher.path("/**/to")
+                .matches(request) must_== Matcher.Result(false)
+            Matcher.path("/**/**/**/**")
+                .matches(request) must_== Matcher.Result(false)
+            Matcher.path("/path/**/other")
                 .matches(request) must_== Matcher.Result(false)
         }
     }
@@ -123,15 +186,15 @@ class PathTest extends Specification with Mockito {
                 )
         }
 
-        "ignore extra colons" in {
+        "be greedy when multiple colons are used" in {
             Matcher.path("/path/to/:::name")
                 .matches(request) must_== Matcher.Result(
                     true, "name" -> "resource"
                 )
 
-            Matcher.path("/path/::one::/::::two:")
+            Matcher.path("/::one/::::two")
                 .matches(request) must_== Matcher.Result(
-                    true, "one" -> "to", "two" -> "resource"
+                    true, "one" -> "path/to", "two" -> "resource"
                 )
         }
 

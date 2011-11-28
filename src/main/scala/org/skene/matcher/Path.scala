@@ -20,7 +20,7 @@ case class ScannerBundle(
     def path ( path: String ) = ScannerBundle( path, index, params )
 
     /**
-     * Drops a number of characters from the right hand side of the path
+     * Drops a number of characters from the left hand side of the path
      */
     def drop ( count: Int )
         = ScannerBundle( path.drop(count), index, params )
@@ -129,7 +129,7 @@ private object Glob {
 
         /** {@inheritDoc} */
         override def toString( until: Char )
-            = "Named Glob %s @%s".format(name, until)
+            = "Glob :%s @%s".format(name, until)
 
     }
 
@@ -149,7 +149,7 @@ private object Glob {
     /**
      * The signature for callbacks that can be used to scan a path
      */
-    type ScanCallback
+    type Greediness
         = ( PathScanner, Char, String, ScannerBundle ) => Matcher.Result
 
     /**
@@ -176,27 +176,70 @@ private object Glob {
     }
 
     /**
+     * A greedy path scanner
+     */
+    def Greedy (
+        next: PathScanner,
+        until: Char,
+        key: String,
+        bundle: ScannerBundle
+    ): Matcher.Result = {
+
+        // A helper method for recursively checking various positions
+        def scan ( from: Int ): Matcher.Result = {
+
+            val result = next(
+                bundle
+                    .inc
+                    .drop( from )
+                    .add( key -> bundle.path.take(from) )
+            )
+
+            // If this position matches, return that it does. Otherwise,
+            // search backwards for the next delimiter and check to see if
+            // that one happens to solve this scanner
+            result match {
+                case Matcher.Result(true, _) => result
+                case Matcher.Result(false, _) => {
+                    bundle.path.lastIndexOf( until, from - 1 ) match {
+                        case -1 => result
+                        case nextPos => scan( nextPos )
+                    }
+                }
+            }
+        }
+
+        scan( bundle.path.length() )
+    }
+
+    /**
      * A non-greedy glob path scanner
      */
     class Scanner (
         private val until: Char,
         private val config: Glob.Config,
-        scan: ScanCallback,
+        greedy: Boolean,
         private val next: PathScanner
     ) extends PathScanner {
 
         /**
          * The partially applied scan callback
          */
-        private val appliedScan = scan(next, until, _:String, _:ScannerBundle)
+        private val scan = {
+            if ( greedy ) Greedy(next, until, _:String, _:ScannerBundle)
+            else Ungreedy(next, until, _:String, _:ScannerBundle)
+        }
 
         /** {@inheritDoc} */
         override def apply ( bundle: ScannerBundle )
-            = appliedScan( config.key(bundle), bundle )
+            = scan( config.key(bundle), bundle )
 
         /** {@inheritDoc} */
-        override def toString
-            = "[%s] -> %s".format(config.toString(until), next)
+        override def toString = "[%s%s] -> %s".format(
+            if ( greedy ) "Greedy " else "",
+            config.toString(until),
+            next
+        )
 
     }
 
@@ -211,7 +254,7 @@ private object PathScanner {
      * A helper method for building the wildcard portion of a scanner
      */
     private def buildGlob (
-        pos: Int, pattern: String, parent: PathScanner
+        pos: Int, pattern: String, parent: PathScanner, greedy: Boolean
     ): PathScanner = {
 
         val length = pattern.length
@@ -219,13 +262,13 @@ private object PathScanner {
         // If the wildcard is at the end of the pattern, we don't
         // need a static string comparison scanner
         if ( pos + 1 == length ) {
-            new Glob.Scanner( '/', new Glob.Indexed, Glob.Ungreedy, parent )
+            new Glob.Scanner( '/', new Glob.Indexed, greedy, parent )
         }
         else {
             new Glob.Scanner(
                 pattern( pos + 1 ),
                 new Glob.Indexed,
-                Glob.Ungreedy,
+                greedy,
                 CompareScanner(
                     pattern.takeRight( length - pos - 1 ),
                     parent
@@ -238,7 +281,7 @@ private object PathScanner {
      * A helper method for building a named wildcard scanner
      */
     private def buildNamed (
-        pos: Int, pattern: String, parent: PathScanner
+        pos: Int, pattern: String, parent: PathScanner, greedy: Boolean
     ): PathScanner = {
 
         // Search rightward from the wildcard position to find all the letters
@@ -263,7 +306,7 @@ private object PathScanner {
             name match {
                 case "" => parent
                 case _ => new Glob.Scanner(
-                    '/', new Glob.Named(name), Glob.Ungreedy, parent
+                    '/', new Glob.Named(name), greedy, parent
                 )
             }
         }
@@ -277,7 +320,7 @@ private object PathScanner {
                 case _ => new Glob.Scanner(
                     pattern( nameEnd ),
                     new Glob.Named(name),
-                    Glob.Ungreedy,
+                    greedy,
                     compare
                 )
             }
@@ -311,15 +354,23 @@ private object PathScanner {
                     pos
                 )
 
-                val wildcardScanner = pattern(pos) match {
-                    case '*' => buildGlob( pos, pattern, parent )
-                    case ':' => buildNamed( pos, pattern, parent )
+                // The greediness mode in which the scanner should be run. This
+                // is determined by whether they repeated the wildcard
+                val greedy = repeatsTo != pos
+
+                // Divine the callback to use for generating the scanner
+                // specified by the type of wildcard
+                val scanner = pattern(pos) match {
+                    case '*' => buildGlob(pos, pattern, parent, greedy)
+                    case ':' => buildNamed(pos, pattern, parent, greedy)
                 }
 
                 // trim any repeated wildcards off the remaining pattern
                 val remaining = pattern.take( repeatsTo )
 
-                buildScanner( remaining, wildcardScanner )
+                // Recurse to build scanners for the remaining bits of
+                // the pattern
+                buildScanner( remaining, scanner )
             }
         }
     }
