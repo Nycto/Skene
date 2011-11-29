@@ -51,7 +51,7 @@ trait Handler extends HttpServlet {
         val result = handle( wrappedReq )
             .addHeader(
                 Response.Header.ContentType(),
-                Response.ContentType.Html()
+                Response.ContentType.HTML()
             )
 
         logger.response( result )

@@ -145,19 +145,20 @@ object Response {
         case class Bmp() extends ContentType("image/bmp")
         case class Css() extends ContentType("text/css")
         case class Gif() extends ContentType("image/gif")
-        case class Html() extends ContentType("text/html;charset=utf-8")
+        case class HTML() extends ContentType("text/html;charset=utf-8")
         case class Icon() extends ContentType("image/x-icon")
         case class Jpeg() extends ContentType("image/jpeg")
         case class Javascript() extends ContentType("application/x-javascript")
+        case class JSON() extends ContentType("application/json")
         case class Pdf() extends ContentType("application/pdf")
         case class Png() extends ContentType("image/png")
-        case class Svg() extends ContentType("image/svg+xml")
+        case class SVG() extends ContentType("image/svg+xml")
         case class Swf() extends ContentType("application/x-shockwave-flash")
         case class Text() extends ContentType("text/plain")
         case class Tiff() extends ContentType("image/tiff")
-        case class Xhtml() extends ContentType("application/xhtml+xml")
-        case class Xml() extends ContentType("application/xml")
-        case class Xslt() extends ContentType("application/xslt+xml")
+        case class XHTML() extends ContentType("application/xhtml+xml")
+        case class XML() extends ContentType("application/xml")
+        case class XSLT() extends ContentType("application/xslt+xml")
         case class Zip() extends ContentType("application/zip")
     }
 
@@ -192,10 +193,24 @@ class Response (
         = header( Response.Header.ContentType(), value )
 
     /**
-     * Creates a new copy of this response, but with the HTML content
-     * type set.
+     * Clones this response and sets the Content-Type to HTML
      */
-    def isHtml = contentType( Response.ContentType.Html() )
+    def isHtml = contentType( Response.ContentType.HTML() )
+
+    /**
+     * Clones this response and sets the Content-Type to XML
+     */
+    def isXML = contentType( Response.ContentType.XML() )
+
+    /**
+     * Clones this response and sets the Content-Type to JSON
+     */
+    def isJSON = contentType( Response.ContentType.JSON() )
+
+    /**
+     * Clones this response and sets the Content-Type to Plain Text
+     */
+    def isText = contentType( Response.ContentType.Text() )
 
     /**
      * {@inheritDoc}
