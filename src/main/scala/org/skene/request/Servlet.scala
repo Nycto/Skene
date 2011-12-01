@@ -2,6 +2,8 @@ package org.skene.request
 
 import javax.servlet.http.HttpServletRequest
 
+import scala.io.Source
+
 import org.skene.URL
 import org.skene.Request
 
@@ -12,15 +14,14 @@ class ServletRequest (
     private val request: HttpServletRequest
 ) extends Request {
 
-    /**
-     * The requested URL
-     */
+    /** {@inheritDoct} */
     override lazy val url = new URL( request.getRequestURL.toString )
 
-    /**
-     * The request method
-     */
+    /** {@inheritDoct} */
     override lazy val method = Request.Method( request.getMethod )
+
+    /** {@inheritDoct} */
+    override def body: Source = Source.fromInputStream(request.getInputStream)
 
 }
 

@@ -1,5 +1,7 @@
 package org.skene
 
+import scala.io.Source
+
 /**
  * Request companion
  */
@@ -74,6 +76,11 @@ trait Request {
     def method: Request.Method
 
     /**
+     * Returns a Source iterator over the body of this request.
+     */
+    def body: Source
+
+    /**
      * Returns whether this request used the GET method
      */
     def isGet: Boolean = method == Request.Method.GET()
@@ -123,8 +130,9 @@ object BareRequest {
     def apply (
         url: URL = URL("http://www.example.com"),
         params: Map[String, String] = Map(),
-        method: Request.Method = Request.Method.GET()
-    ) = new BareRequest( url, params, method )
+        method: Request.Method = Request.Method.GET(),
+        body: Source = Source.fromString("")
+    ) = new BareRequest( url, params, method, body )
 }
 
 /**
@@ -133,7 +141,8 @@ object BareRequest {
 class BareRequest (
     override val url: URL,
     override val params: Map[String, String],
-    override val method: Request.Method
+    override val method: Request.Method,
+    override val body: Source
 ) extends Request
 
 /**
@@ -143,9 +152,17 @@ abstract class RequestDecorator
     ( private val inner: Request )
     extends Request
 {
+    /** {@inheritDoc} */
     override def url = inner.url
+
+    /** {@inheritDoc} */
     override def params = inner.params
+
+    /** {@inheritDoc} */
     override def method = inner.method
+
+    /** {@inheritDoc} */
+    override def body = inner.body
 }
 
 /**
@@ -155,9 +172,7 @@ class ParameterizedRequest
     ( inner: Request, newParams: Map[String, String] )
     extends RequestDecorator( inner )
 {
-    /**
-     * @see Request
-     */
+    /** {@inheritDoc} */
     override val params: Map[String, String] = newParams
 }
 
