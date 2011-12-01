@@ -81,6 +81,20 @@ trait Handler extends HttpServlet {
         request: HttpServletRequest, response: HttpServletResponse
     ): Unit = doRequest( request, response )
 
+    /**
+     * {@inheritDoc}
+     */
+    override def doPut (
+        request: HttpServletRequest, response: HttpServletResponse
+    ): Unit = doRequest( request, response )
+
+    /**
+     * {@inheritDoc}
+     */
+    override def doDelete (
+        request: HttpServletRequest, response: HttpServletResponse
+    ): Unit = doRequest( request, response )
+
 }
 
 /**
