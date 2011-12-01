@@ -27,11 +27,14 @@ object Response {
     implicit def apply ( content: StringBuffer ): Response
         = new Response( content = Renderable(content) )
 
-    implicit def apply ( thunk: () => String ): Response
-        = new Response( content = Renderable(thunk) )
-
     implicit def apply ( content: NodeSeq ): Response
         = new Response( content = Renderable(content) )
+
+    def apply ( thunk: () => String ): Response
+        = new Response( content = Renderable(thunk) )
+
+    def apply ( callback: (Writer) => Unit ): Response
+        = new Response( content = Renderable(callback) )
 
     /**
      * A helper for building an HTML response
