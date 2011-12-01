@@ -13,24 +13,24 @@ object Response {
     def apply (
         content: Renderable = Renderable(""),
         code: Response.Code = Response.Code.OK()
-    ) = new Response( content, code )
+    ): Response = new Response( content, code )
 
-    implicit def apply ( content: Renderable )
+    implicit def apply ( content: Renderable ): Response
         = new Response( content = content )
 
-    implicit def apply ( content: String )
+    implicit def apply ( content: String ): Response
         = new Response( content = Renderable(content) )
 
-    implicit def apply ( content: StringBuilder )
+    implicit def apply ( content: StringBuilder ): Response
         = new Response( content = Renderable(content) )
 
-    implicit def apply ( content: StringBuffer )
+    implicit def apply ( content: StringBuffer ): Response
         = new Response( content = Renderable(content) )
 
-    implicit def apply ( thunk: () => String )
+    implicit def apply ( thunk: () => String ): Response
         = new Response( content = Renderable(thunk) )
 
-    implicit def apply ( content: NodeSeq )
+    implicit def apply ( content: NodeSeq ): Response
         = new Response( content = Renderable(content) )
 
     /**
@@ -39,7 +39,7 @@ object Response {
     def html (
         content: Renderable = Renderable(""),
         code: Response.Code = Response.Code.OK()
-    ) = Response( content, code ).isHtml
+    ): Response = Response( content, code ).isHtml
 
     /**
      * An HTTP Response code
@@ -195,22 +195,22 @@ class Response (
     /**
      * Clones this response and sets the Content-Type to HTML
      */
-    def isHtml = contentType( Response.ContentType.HTML() )
+    def isHtml: Response = contentType( Response.ContentType.HTML() )
 
     /**
      * Clones this response and sets the Content-Type to XML
      */
-    def isXML = contentType( Response.ContentType.XML() )
+    def isXML: Response = contentType( Response.ContentType.XML() )
 
     /**
      * Clones this response and sets the Content-Type to JSON
      */
-    def isJSON = contentType( Response.ContentType.JSON() )
+    def isJSON: Response = contentType( Response.ContentType.JSON() )
 
     /**
      * Clones this response and sets the Content-Type to Plain Text
      */
-    def isText = contentType( Response.ContentType.Text() )
+    def isText: Response = contentType( Response.ContentType.Text() )
 
     /**
      * {@inheritDoc}
