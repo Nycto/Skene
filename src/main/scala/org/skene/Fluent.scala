@@ -104,7 +104,18 @@ trait Skene extends Handler {
     /**
      * Sets up a default handler
      */
-    lazy val default: Fluent = new Fluent( Matcher.always )
+    def default ( handler: Handler ): Unit = dispatcher.default( handler )
+
+    /**
+     * Sets up a default handler from the thunk
+     */
+    def default ( handler: => Response ): Unit = default( Handler(handler) )
+
+    /**
+     * Sets up a default handler from a callback
+     */
+    def default ( handler: (Request) => Response ): Unit
+        = default( Handler(handler) )
 
     /**
      * Sets up the handler for when exceptions are thrown
