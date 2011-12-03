@@ -2,6 +2,9 @@ package org.skene
 
 import scala.io.Source
 
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+
 /**
  * Request companion
  */
@@ -78,7 +81,12 @@ trait Request {
     /**
      * Returns a Source iterator over the body of this request.
      */
-    def body: Source
+    def body: Source = Source.fromInputStream( bodyStream )
+
+    /**
+     * Returns an input stream of the body of this request.
+     */
+    def bodyStream: InputStream
 
     /**
      * Returns whether this request used the GET method
@@ -131,8 +139,10 @@ object BareRequest {
         url: URL = URL("http://www.example.com"),
         params: Map[String, String] = Map(),
         method: Request.Method = Request.Method.GET(),
-        body: Source = Source.fromString("")
-    ) = new BareRequest( url, params, method, body )
+        body: String = ""
+    ) = new BareRequest(
+        url, params, method, new ByteArrayInputStream( body.getBytes )
+    )
 }
 
 /**
@@ -142,7 +152,7 @@ class BareRequest (
     override val url: URL,
     override val params: Map[String, String],
     override val method: Request.Method,
-    override val body: Source
+    override val bodyStream: InputStream
 ) extends Request
 
 /**
@@ -162,7 +172,7 @@ abstract class RequestDecorator
     override def method = inner.method
 
     /** {@inheritDoc} */
-    override def body = inner.body
+    override def bodyStream = inner.bodyStream
 }
 
 /**

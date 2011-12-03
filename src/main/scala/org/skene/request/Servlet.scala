@@ -21,7 +21,7 @@ class ServletRequest (
     override lazy val method = Request.Method( request.getMethod )
 
     /** {@inheritDoct} */
-    override def body: Source = Source.fromInputStream(request.getInputStream)
+    override def bodyStream = request.getInputStream
 
 }
 
