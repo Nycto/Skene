@@ -11,7 +11,7 @@ trait Skene extends Handler {
     /**
      * The dispatcher to collect into
      */
-    private val dispatcher = new Dispatcher
+    private val dispatcher = new Dispatcher( logger )
 
     /**
      * A helper class for fluently building a dispatcher

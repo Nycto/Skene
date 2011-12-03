@@ -92,7 +92,8 @@ class DispatcherTest extends Specification with Mockito {
 
         "be called when an exception is thrown" in {
             val dispatcher =
-                (new Dispatcher).add( Matcher.always, throwingHandler )
+                new Dispatcher( Logger.nil )
+                .add( Matcher.always, throwingHandler )
 
             dispatcher.error( (err, request) => response )
 
@@ -100,7 +101,9 @@ class DispatcherTest extends Specification with Mockito {
         }
 
         "bw called when the default handler throws an exception" in {
-            val dispatcher = (new Dispatcher).default( throwingHandler )
+            val dispatcher =
+                new Dispatcher( Logger.nil )
+                .add( Matcher.always, throwingHandler )
 
             dispatcher.error( (err, request) => response )
 

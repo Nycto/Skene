@@ -7,7 +7,9 @@ import org.skene.util.LinkedList
  *
  * This class is thread safe
  */
-class Dispatcher extends Handler {
+class Dispatcher (
+    override protected val logger: Logger = Logger.logger
+) extends Handler {
 
     /**
      * A pairing of a matcher and it's handler
@@ -101,8 +103,11 @@ class Dispatcher extends Handler {
         }
         catch {
             case err => error match {
-                case Some(_) => error.get( err, request )
-                case None => throw err
+                case Some(_) => {
+                    logger.error( err )
+                    error.get( err, request )
+                }
+                case None => { throw err }
             }
         }
     }

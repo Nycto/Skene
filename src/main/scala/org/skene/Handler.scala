@@ -54,6 +54,7 @@ trait Handler extends HttpServlet {
             handle( wrappedReq )
         }
         catch { case err => {
+            logger.error( err )
             Response(
                 content =
                     <html>
