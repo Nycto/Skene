@@ -70,5 +70,19 @@ class DispatcherTest extends Specification with Mockito {
         }
     }
 
+    "The default handler in a Dispatcher" should {
+        "Be called when none of the other matchers take" in {
+            val dispatcher = {
+                (new Dispatcher)
+                    .add( Matcher.never, handlerUncallable )
+                    .add( Matcher.never, handlerUncallable )
+            }
+
+            dispatcher.default( handlerCallable )
+
+            dispatcher.handle( request ) must_== response
+        }
+    }
+
 }
 
