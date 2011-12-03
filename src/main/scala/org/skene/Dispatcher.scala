@@ -25,6 +25,11 @@ class Dispatcher extends Handler {
     private var default: Option[Handler] = None
 
     /**
+     * The handler to use when an exception is thrown
+     */
+    private var error: Option[(Throwable, Request) => Response] = None
+
+    /**
      * The handler to use when nothing matches and there is no default
      */
     final lazy private val unresolvable = Handler{ (request) =>
@@ -62,6 +67,16 @@ class Dispatcher extends Handler {
     }
 
     /**
+     * Changes the error handler for this dispatcher
+     */
+     def error ( handler: (Throwable, Request) => Response ): Dispatcher = {
+        error.synchronized {
+            error = Some(handler)
+        }
+        this
+    }
+
+    /**
      * Checks the list of possible handlers and executes
      * the one that matches
      */
@@ -76,10 +91,19 @@ class Dispatcher extends Handler {
             }
         })
 
-        matched match {
-            case Some( (params, handler) )
-                => handler.handle( request.withParams(params) )
-            case None => default.getOrElse( unresolvable ).handle( request )
+        try {
+            matched match {
+                case None => default.getOrElse( unresolvable ).handle( request )
+                case Some( (params, handler) ) => {
+                    handler.handle( request.withParams(params) )
+                }
+            }
+        }
+        catch {
+            case err => error match {
+                case Some(_) => error.get( err, request )
+                case None => throw err
+            }
         }
     }
 

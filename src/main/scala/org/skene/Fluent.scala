@@ -107,6 +107,12 @@ trait Skene extends Handler {
     lazy val default: Fluent = new Fluent( Matcher.always )
 
     /**
+     * Sets up the handler for when exceptions are thrown
+     */
+    def error ( handler: (Throwable, Request) => Response ): Unit
+        = dispatcher.error( handler )
+
+    /**
      * Sets up a handler for the root directory
      */
     lazy val index: Fluent = request("/")

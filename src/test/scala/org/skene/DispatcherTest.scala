@@ -84,5 +84,30 @@ class DispatcherTest extends Specification with Mockito {
         }
     }
 
+    "The error handler of a Dispatcher" should {
+
+        val throwingHandler = Handler( (request) => {
+            throw new Exception
+        })
+
+        "be called when an exception is thrown" in {
+            val dispatcher =
+                (new Dispatcher).add( Matcher.always, throwingHandler )
+
+            dispatcher.error( (err, request) => response )
+
+            dispatcher.handle( request ) must_== response
+        }
+
+        "bw called when the default handler throws an exception" in {
+            val dispatcher = (new Dispatcher).default( throwingHandler )
+
+            dispatcher.error( (err, request) => response )
+
+            dispatcher.handle( request ) must_== response
+        }
+
+    }
+
 }
 
