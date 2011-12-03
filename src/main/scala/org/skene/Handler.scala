@@ -46,13 +46,29 @@ trait Handler extends HttpServlet {
     ): Unit = {
 
         val wrappedReq = new ServletRequest( request )
+
         logger.request( wrappedReq )
 
-        val result = handle( wrappedReq )
-            .addHeader(
-                Response.Header.ContentType(),
-                Response.ContentType.HTML()
+        // Pass the request off to the handler, but watch for any errors
+        val result = try {
+            handle( wrappedReq )
+        }
+        catch { case err => {
+            Response(
+                content =
+                    <html>
+                        <head><title>500 Internal Server Error</title></head>
+                        <body><h1>500 Internal Server Error</h1></body>
+                    </html>,
+                code = Response.Code.InternalServerError()
             )
+        } }
+
+        // Add a sensible default
+        result.addHeader(
+            Response.Header.ContentType(),
+            Response.ContentType.HTML()
+        )
 
         logger.response( result )
 
