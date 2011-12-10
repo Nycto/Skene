@@ -195,6 +195,7 @@ class Response (
     def contentType ( value: String ): Response
         = header( Response.Header.ContentType(), value )
 
+
     /**
      * Clones this response and sets the Content-Type to HTML
      */
@@ -214,6 +215,40 @@ class Response (
      * Clones this response and sets the Content-Type to Plain Text
      */
     def isText: Response = contentType( Response.ContentType.Text() )
+
+
+    /**
+     * A helper method that builds a new response based on this one with
+     * a different response code.
+     */
+    def code ( newCode: Response.Code )
+        = new Response( content, newCode, headers )
+
+    /**
+     * Builds a new response with a 200 OK
+     */
+    def ok = code( Response.Code.OK() )
+
+    /**
+     * Builds a new response with a 400 Bad Requestcode
+     */
+    def badRequest = code( Response.Code.BadRequest() )
+
+    /**
+     * Builds a new response with a 401 unauthorized code
+     */
+    def unauthorized = code( Response.Code.Unauthorized() )
+
+    /**
+     * Builds a new response with a 404 Not Found code
+     */
+    def notFound = code( Response.Code.NotFound() )
+
+    /**
+     * Builds a new response with a 500 internal server error code
+     */
+    def serverError = code( Response.Code.InternalServerError() )
+
 
     /**
      * {@inheritDoc}
