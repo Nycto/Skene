@@ -71,7 +71,7 @@ trait Request {
     /**
      * Any parameters associated with the request
      */
-    def params: Map[String, String] = Map()
+    def params: Map[String, String]
 
     /**
      * The HTTP Request method for this request. I.e. GET, POST, PUT, DELETE
@@ -87,6 +87,11 @@ trait Request {
      * Returns an input stream of the body of this request.
      */
     def bodyStream: InputStream
+
+    /**
+     * A map of request headers
+     */
+    def headers: Map[String, String]
 
     /**
      * Returns whether this request used the GET method
@@ -139,9 +144,11 @@ object BareRequest {
         url: URL = URL("http://www.example.com"),
         params: Map[String, String] = Map(),
         method: Request.Method = Request.Method.GET(),
-        body: String = ""
+        body: String = "",
+        headers: Map[String, String] = Map()
     ) = new BareRequest(
-        url, params, method, new ByteArrayInputStream( body.getBytes )
+        url, params, method,
+        new ByteArrayInputStream( body.getBytes ), headers
     )
 }
 
@@ -152,7 +159,8 @@ class BareRequest (
     override val url: URL,
     override val params: Map[String, String],
     override val method: Request.Method,
-    override val bodyStream: InputStream
+    override val bodyStream: InputStream,
+    override val headers: Map[String, String]
 ) extends Request
 
 /**
@@ -173,6 +181,9 @@ abstract class RequestDecorator
 
     /** {@inheritDoc} */
     override def bodyStream = inner.bodyStream
+
+    /** {@inheritDoc} */
+    override def headers = inner.headers
 }
 
 /**
