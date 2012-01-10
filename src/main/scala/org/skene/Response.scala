@@ -12,8 +12,9 @@ object Response {
 
     def apply (
         content: Renderable = Renderable(""),
-        code: Response.Code = Response.Code.OK()
-    ): Response = new Response( content, code )
+        code: Response.Code = Response.Code.OK(),
+        headers: Map[String,String] = Map()
+    ): Response = new Response( content, code, headers )
 
     implicit def apply ( content: Renderable ): Response
         = new Response( content = content )
@@ -35,14 +36,6 @@ object Response {
 
     def apply ( callback: (Writer) => Unit ): Response
         = new Response( content = Renderable(callback) )
-
-    /**
-     * A helper for building an HTML response
-     */
-    def html (
-        content: Renderable = Renderable(""),
-        code: Response.Code = Response.Code.OK()
-    ): Response = Response( content, code ).isHtml
 
     /**
      * An HTTP Response code
@@ -164,6 +157,26 @@ object Response {
         case class XSLT() extends ContentType("application/xslt+xml")
         case class Zip() extends ContentType("application/zip")
     }
+
+    /**
+     * A helper for building an HTML response
+     */
+    def html (
+        content: Renderable = Renderable(""),
+        code: Response.Code = Response.Code.OK()
+    ): Response = Response( content, code ).isHtml
+
+    /**
+     * Redirects the client using a 302 Found response code
+     */
+    def found ( url: String ): Response
+        = new Response( "", Response.Code.Found(), Map("Location" -> url) )
+
+    /**
+     * Redirects the client using a 301 Moved response code
+     */
+    def moved ( url: String ): Response
+        = new Response( "", Response.Code.Moved(), Map("Location" -> url) )
 
 }
 
