@@ -78,7 +78,8 @@ private class RegistryData( val builders: Registry.Builders = Map() ) {
 
         // Make sure none of the prereq interfaces have conflicting methods
         clazzSet.foldLeft( Set[String]() ) ( (methods, clazz) => {
-            val newMethods = clazz.getMethods.map( _.getName ).toSet
+            val newMethods =
+                clazz.getMethods.map( _.getName ).toSet - "toString"
 
             val overlap = methods.intersect( newMethods )
             if ( overlap.size > 0 )

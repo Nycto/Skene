@@ -12,7 +12,6 @@ class PrereqTest extends Specification {
     trait Req1 { def one: String }
     trait Req2 { def two: String }
     trait Req3 { def three: String }
-    trait Req3Conflict { def three: String }
 
     "A request with an unregistered prereq" should {
         "raise an exception" in {
@@ -24,7 +23,10 @@ class PrereqTest extends Specification {
     }
 
     "Two prereqs with conflicting interfaces" should {
+
         "raise an exception" in {
+            trait Req3Conflict { def three: String }
+
             val prereqs = Registry()
                 .register[Req3]( () => Right( new Req3 {
                     val three = "3"
@@ -36,6 +38,19 @@ class PrereqTest extends Specification {
             prereqs[Req3, Req3Conflict] ( (prereq) => Response() ) must throwA[
                 Registry.ConflictingPrereqs
             ]
+        }
+
+        "ignore toString methods" in {
+            trait Req4 { override def toString = "Req4" }
+            trait Req5 { override def toString = "Req5" }
+
+            val prereqs = Registry()
+                .register[Req4]( () => Right( new Req4 {} ) )
+                .register[Req5]( () => Right( new Req5 {} ) )
+
+            prereqs[Req4, Req5] ( (prereq) => Response() )
+
+            ok
         }
     }
 
