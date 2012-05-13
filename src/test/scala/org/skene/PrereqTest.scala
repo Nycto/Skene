@@ -22,6 +22,21 @@ class PrereqTest extends Specification {
         }
     }
 
+    "An unregistered dependency" should {
+        "raise an exception" in {
+            val prereqs = Registry()
+                .register[Req1](new Provider[Req1] {
+                    override def dependencies = Set(classOf[Req2])
+                    override def build( bundle: Bundle )
+                        = Right( new Req1 { override val one = "1" } )
+                })
+
+            prereqs[Req1] ( (prereq) => Response() ) must throwA[
+                Registry.UnregisteredPrereq
+            ]
+        }
+    }
+
     "Two prereqs with conflicting interfaces" should {
 
         "raise an exception" in {
