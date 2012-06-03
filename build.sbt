@@ -2,6 +2,8 @@ name := "Skene"
 
 scalaVersion := "2.9.1"
 
+version := "0.1"
+
 // append -deprecation to the options passed to the Scala compiler
 scalacOptions += "-deprecation"
 
