@@ -13,31 +13,33 @@ Basic Example
 
 Putting to together a Servlet that works with Jetty or Tomcat is as easy as:
 
-    package main.scala.com.example
+```scala
+package main.scala.com.example
 
-    import org.skene._
+import org.skene._
 
-    class BasicApp extends Skene {
+class BasicApp extends Skene {
 
-        index {
-            "<h1>Root Directory</h1>"
-        }
-
-        request("/url") { request =>
-            "<h1>" + request.url + "</h1>"
-        }
-
-        request("/header") {
-            Response("<h1>Custom Header Set</<h1>")
-                .setHeader("X-Skene", "Interesting...")
-        }
-
-        default {
-            Response(
-                content = "<h1>404 not found</h1>",
-                code = Response.NotFound
-            )
-        }
+    index {
+        "<h1>Root Directory</h1>"
     }
+
+    request("/url") { request =>
+        "<h1>" + request.url + "</h1>"
+    }
+
+    request("/header") {
+        Response("<h1>Custom Header Set</<h1>")
+            .setHeader("X-Skene", "Interesting...")
+    }
+
+    default {
+        Response(
+            content = "<h1>404 not found</h1>",
+            code = Response.NotFound
+        )
+    }
+}
+```
 
 
