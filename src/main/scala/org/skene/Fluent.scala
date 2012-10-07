@@ -18,10 +18,10 @@ trait Skene extends Handler {
      */
     class Fluent ( private val matcher: Matcher ) {
 
-        def apply ( callback: (Request) => Response ): Unit
+        def apply ( callback: (Request, Response) => Unit ): Unit
             = dispatcher.add( matcher, Handler(callback) )
 
-        def apply ( callback: => Response ): Unit
+        def apply ( callback: (Response) => Unit ): Unit
             = dispatcher.add( matcher, Handler(callback) )
 
         def apply ( handler: Handler ): Unit
@@ -43,11 +43,9 @@ trait Skene extends Handler {
 
     }
 
-    /**
-     * @see Handler
-     */
-    override def handle( request: Request ): Response
-        = dispatcher.handle( request )
+    /** {@inheritDoc} */
+    override def handle( request: Request, response: Response ): Unit
+        = dispatcher.handle( request, response )
 
     /**
      * Adds a handler for any request matching the given path
@@ -107,20 +105,15 @@ trait Skene extends Handler {
     def default ( handler: Handler ): Unit = dispatcher.default( handler )
 
     /**
-     * Sets up a default handler from the thunk
-     */
-    def default ( handler: => Response ): Unit = default( Handler(handler) )
-
-    /**
      * Sets up a default handler from a callback
      */
-    def default ( handler: (Request) => Response ): Unit
+    def default ( handler: (Request, Response) => Unit ): Unit
         = default( Handler(handler) )
 
     /**
      * Sets up the handler for when exceptions are thrown
      */
-    def error ( handler: (Throwable, Request) => Response ): Unit
+    def error ( handler: (Throwable, Request, Response) => Unit ): Unit
         = dispatcher.error( handler )
 
     /**
@@ -131,7 +124,7 @@ trait Skene extends Handler {
     /**
      * Uses a custom callback as a matcher
      */
-    def when ( callback: Request => Boolean ) = {
+    def when ( callback: Request => Boolean ): Fluent = {
         new Fluent( Matcher.call { request =>
             Matcher.Result( callback(request) )
         } )
@@ -140,7 +133,7 @@ trait Skene extends Handler {
     /**
      * Uses a custom thunk as a matcher
      */
-    def when ( callback: => Boolean )
+    def when ( callback: => Boolean ): Fluent
         = new Fluent( Matcher.call { Matcher.Result( callback ) } )
 
 }

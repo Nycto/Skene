@@ -1,140 +1,6 @@
 package org.skene
 
-import scala.reflect.ClassTag
-
-
-/**
- * An object that has the ability to build a Prerequisite object
- */
-trait Provider[T] {
-
-    /**
-     * Returns a list of dependencies that must be built before this provider
-     * can operate
-     */
-    def dependencies: Set[Class[_]] = Set()
-
-    /**
-     * Builds the data type
-     */
-    def build( bundle: Bundle ): Either[Response,T]
-
-}
-
-/**
- * Wraps a list of classes to provide easy access to their properties
- */
-private class ClassList ( val clazzes: Set[Class[_]] ) {
-
-    /**
-     * Asserts that none of the classes in this class list have conflicting
-     * method interfaces
-     */
-    clazzes.foldLeft( Set[String]() ) ( (methods, clazz) => {
-
-        // Get all the methods in this class, except for toString
-        val newMethods = clazz.getMethods.map( _.getName ).toSet - "toString"
-
-        val overlap = methods.intersect( newMethods )
-        if ( overlap.size > 0 )
-            throw new Registry.ConflictingPrereqs( overlap )
-
-        methods ++ newMethods
-    } )
-
-    /**
-     * Creates a new class list from a set of manifests
-     */
-    def this ( clazzes: ClassTag[_]* )
-        = this( Set( clazzes:_* ).map(_.runtimeClass) )
-
-}
-
-/**
- * The internal implementation of the Registry. This is separated out
- * to simplify the Registry class
- */
-private class RegistryData(
-    val builders: Map[Class[_], Provider[_]] = Map()
-) {
-
-    /**
-     * A set of all the registered prereqs
-     */
-    private val registered: Set[Class[_]] = builders.keySet
-
-    /**
-     * Registers a new builder for a given type
-     */
-    def register[T: Manifest] ( builder: Provider[T] ): RegistryData
-        = new RegistryData( builders + ((manifest[T].runtimeClass, builder)) )
-
-    /**
-     * Registers a callback to act as a Prereq provider
-     */
-    def register[T: Manifest] (
-        builder: (Bundle) => Either[Response,T],
-        depends: Class[_]*
-    ): RegistryData = {
-        register( new Provider[T] {
-            override def build( bundle: Bundle ) = builder(bundle)
-            override def dependencies = depends.toSet
-        } )
-    }
-
-    /**
-     * Registers a callback to act as a Prereq provider
-     */
-    def register[T: Manifest] (
-        builder: () => Either[Response,T],
-        depends: Class[_]*
-    ): RegistryData = {
-        register( new Provider[T] {
-            override def build( bundle: Bundle ) = builder()
-            override def dependencies = depends.toSet
-        } )
-    }
-
-    /**
-     * Uses the map of registered prereq builders to ensure all the dependencies
-     * needed by a list of classes are available
-     */
-    def assertBuildable ( clazzes: Set[Class[_]] ): Unit = {
-
-        // Accepts a list of classes to check and a list of classes that
-        // have already been visited.
-        def collect (
-            depends: Set[Class[_]],
-            seen: Set[Class[_]]
-        ): Set[Class[_]] = {
-            depends.foldLeft( seen )( (accum, clazz) => {
-                if ( accum.contains( clazz ) )
-                    accum
-                else if ( !builders.contains(clazz) )
-                    throw new Registry.UnregisteredPrereq( clazz )
-                else
-                    collect( builders(clazz).dependencies, accum + clazz )
-            })
-        }
-
-        collect( clazzes, Set() )
-    }
-
-    /**
-     * Constructs an instance of the requested type by calling all the
-     * registered builders
-     */
-    def build[T](
-        callback: (T) => Response, clazzList: ClassList
-    ): Handler = {
-
-        // Make sure all of the requested prereqs have been registered
-        assertBuildable( clazzList.clazzes )
-
-        new PrereqHandler[T](builders, callback, clazzList.clazzes)
-    }
-
-}
+import scala.actors.Actor
 
 /**
  * Companion for a Registry
@@ -170,6 +36,7 @@ object Registry {
 
 }
 
+
 /**
  * A registry for collecting available Prerequisite Providers and combining
  * them into a Bundle
@@ -179,7 +46,13 @@ class Registry private ( private val inner: RegistryData ) {
     /**
      * The public constructor
      */
-    def this() = this( new RegistryData )
+    def this() = this( new RegistryData( threader = Actor.actor ) )
+
+    /**
+     * A constructor with an alternate threading model
+     */
+    def this( threader: ( => Unit ) => Unit )
+        = this( new RegistryData( threader = threader ) )
 
     /**
      * Registers a new builder for a given type
@@ -191,7 +64,7 @@ class Registry private ( private val inner: RegistryData ) {
      * Registers a callback to act as a Prereq provider
      */
     def register[T: Manifest] (
-        builder: (Bundle) => Either[Response,T],
+        builder: (Bundle, Continue[T]) => Unit,
         depends: Class[_]*
     ): Registry
         = new Registry( inner.register(builder, depends:_* ) )
@@ -200,10 +73,16 @@ class Registry private ( private val inner: RegistryData ) {
      * Registers a callback to act as a Prereq provider
      */
     def register[T: Manifest] (
-        builder: () => Either[Response,T],
+        builder: ( Continue[T] ) => Unit,
         depends: Class[_]*
     ): Registry
         = new Registry( inner.register(builder, depends:_* ) )
+
+    /**
+     * Returns the dependencies of a set of classes
+     */
+    def dependenciesOf ( clazzes: Class[_]* ): List[Class[_]]
+        = inner.dependenciesOf( Set( clazzes: _* ) )
 
     /**
      * Builds a new bundle of the given type
@@ -211,8 +90,9 @@ class Registry private ( private val inner: RegistryData ) {
     def apply[
         A: Manifest
     ] ( callback: (
-        Prereq with A
-    ) => Response ): Handler
+        Prereq with A,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A]
         ) )
@@ -223,8 +103,9 @@ class Registry private ( private val inner: RegistryData ) {
     def apply[
         A: Manifest, B: Manifest
     ] ( callback: (
-        Prereq with A with B
-    ) => Response ): Handler
+        Prereq with A with B,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B]
         ) )
@@ -235,8 +116,9 @@ class Registry private ( private val inner: RegistryData ) {
     def apply[
         A: Manifest, B: Manifest, C: Manifest
     ] ( callback: (
-        Prereq with A with B with C
-    ) => Response ): Handler
+        Prereq with A with B with C,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C]
         ) )
@@ -247,8 +129,9 @@ class Registry private ( private val inner: RegistryData ) {
     def apply[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest
     ] ( callback: (
-        Prereq with A with B with C with D
-    ) => Response ): Handler
+        Prereq with A with B with C with D,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D]
         ) )
@@ -259,8 +142,9 @@ class Registry private ( private val inner: RegistryData ) {
     def apply[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest
     ] ( callback: (
-        Prereq with A with B with C with D with E
-    ) => Response ): Handler
+        Prereq with A with B with C with D with E,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E]
         ) )
@@ -272,8 +156,9 @@ class Registry private ( private val inner: RegistryData ) {
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest
     ] ( callback: (
-        Prereq with A with B with C with D with E with F
-    ) => Response ): Handler
+        Prereq with A with B with C with D with E with F,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F]
@@ -286,8 +171,9 @@ class Registry private ( private val inner: RegistryData ) {
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest
     ] ( callback: (
-        Prereq with A with B with C with D with E with F with G
-    ) => Response ): Handler
+        Prereq with A with B with C with D with E with F with G,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G]
@@ -300,8 +186,9 @@ class Registry private ( private val inner: RegistryData ) {
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest
     ] ( callback: (
-        Prereq with A with B with C with D with E with F with G with H
-    ) => Response ): Handler
+        Prereq with A with B with C with D with E with F with G with H,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H]
@@ -314,8 +201,9 @@ class Registry private ( private val inner: RegistryData ) {
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest
     ] ( callback: (
-        Prereq with A with B with C with D with E with F with G with H with I
-    ) => Response ): Handler
+        Prereq with A with B with C with D with E with F with G with H with I,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I]
@@ -329,8 +217,9 @@ class Registry private ( private val inner: RegistryData ) {
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J
-    ) => Response ): Handler
+        with J,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J]
@@ -345,8 +234,9 @@ class Registry private ( private val inner: RegistryData ) {
         K: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K
-    ) => Response ): Handler
+        with J with K,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -362,8 +252,9 @@ class Registry private ( private val inner: RegistryData ) {
         K: Manifest, L: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L
-    ) => Response ): Handler
+        with J with K with L,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -379,8 +270,9 @@ class Registry private ( private val inner: RegistryData ) {
         K: Manifest, L: Manifest, M: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M
-    ) => Response ): Handler
+        with J with K with L with M,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -396,8 +288,9 @@ class Registry private ( private val inner: RegistryData ) {
         K: Manifest, L: Manifest, M: Manifest, N: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N
-    ) => Response ): Handler
+        with J with K with L with M with N,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -413,8 +306,9 @@ class Registry private ( private val inner: RegistryData ) {
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O
-    ) => Response ): Handler
+        with J with K with L with M with N with O,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -431,8 +325,9 @@ class Registry private ( private val inner: RegistryData ) {
         P: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P
-    ) => Response ): Handler
+        with J with K with L with M with N with O with P,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -450,8 +345,9 @@ class Registry private ( private val inner: RegistryData ) {
         P: Manifest, Q: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P with Q
-    ) => Response ): Handler
+        with J with K with L with M with N with O with P with Q,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -469,8 +365,9 @@ class Registry private ( private val inner: RegistryData ) {
         P: Manifest, Q: Manifest, R: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P with Q with R
-    ) => Response ): Handler
+        with J with K with L with M with N with O with P with Q with R,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -488,8 +385,9 @@ class Registry private ( private val inner: RegistryData ) {
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P with Q with R with S
-    ) => Response ): Handler
+        with J with K with L with M with N with O with P with Q with R with S,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -508,8 +406,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T
-    ) => Response ): Handler
+        with T,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -529,8 +428,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U
-    ) => Response ): Handler
+        with T with U,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -551,8 +451,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V
-    ) => Response ): Handler
+        with T with U with V,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -573,8 +474,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W
-    ) => Response ): Handler
+        with T with U with V with W,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -595,8 +497,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W with X
-    ) => Response ): Handler
+        with T with U with V with W with X,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -617,8 +520,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W with X with Y
-    ) => Response ): Handler
+        with T with U with V with W with X with Y,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -640,8 +544,9 @@ class Registry private ( private val inner: RegistryData ) {
     ] ( callback: (
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W with X with Y with Z
-    ) => Response ): Handler
+        with T with U with V with W with X with Y with Z,
+        Response
+    ) => Unit ): Handler
         = inner.build( callback, new ClassList(
             manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
             manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
@@ -652,4 +557,3 @@ class Registry private ( private val inner: RegistryData ) {
         ) )
 
 }
-

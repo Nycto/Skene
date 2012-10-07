@@ -36,17 +36,24 @@ object Request {
         case class PATCH() extends Method("PATCH")
         case class UNKNOWN( method: String ) extends Method("UNKNOWN")
 
-        def apply ( value: String ): Method = value.toUpperCase match {
-            case "HEAD" => HEAD()
-            case "GET" => GET()
-            case "POST" => POST()
-            case "PUT" => PUT()
-            case "DELETE" => DELETE()
-            case "TRACE" => TRACE()
-            case "OPTIONS" => OPTIONS()
-            case "CONNECT" => CONNECT()
-            case "PATCH" => PATCH()
-            case _ => UNKNOWN( value )
+        def apply ( value: String ): Method = {
+            if ( value == null ) {
+                UNKNOWN("Undefined")
+            }
+            else {
+                value.toUpperCase match {
+                    case "HEAD" => HEAD()
+                    case "GET" => GET()
+                    case "POST" => POST()
+                    case "PUT" => PUT()
+                    case "DELETE" => DELETE()
+                    case "TRACE" => TRACE()
+                    case "OPTIONS" => OPTIONS()
+                    case "CONNECT" => CONNECT()
+                    case "PATCH" => PATCH()
+                    case _ => UNKNOWN( value )
+                }
+            }
         }
 
         val values: List[Method] = List(

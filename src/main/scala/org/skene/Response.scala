@@ -1,43 +1,11 @@
 package org.skene
 
-import java.io.Writer
-import java.lang.StringBuilder
-import java.lang.StringBuffer
-import scala.xml.NodeSeq
-
 import scala.language.implicitConversions
 
 /**
  * Companion object...
  */
 object Response {
-
-    def apply (
-        content: Renderable = Renderable(""),
-        code: Response.Code = Response.Code.OK(),
-        headers: Map[String,String] = Map()
-    ): Response = new Response( content, code, headers )
-
-    implicit def apply ( content: Renderable ): Response
-        = new Response( content = content )
-
-    implicit def apply ( content: String ): Response
-        = new Response( content = Renderable(content) )
-
-    implicit def apply ( content: StringBuilder ): Response
-        = new Response( content = Renderable(content) )
-
-    implicit def apply ( content: StringBuffer ): Response
-        = new Response( content = Renderable(content) )
-
-    implicit def apply ( content: NodeSeq ): Response
-        = new Response( content = Renderable(content) )
-
-    def apply ( thunk: () => String ): Response
-        = new Response( content = Renderable(thunk) )
-
-    def apply ( callback: (Writer) => Unit ): Response
-        = new Response( content = Renderable(callback) )
 
     /**
      * An HTTP Response code
@@ -82,48 +50,54 @@ object Response {
     /**
      * The base class for the enumeration of header names
      */
-    sealed abstract class Header ( val name: String )
+    sealed abstract class HeaderField ( val name: String )
 
     /**
      * The supported list of HTTP headers
      */
     object Header {
-        implicit def headerToString ( header: Header ): String = header.name
-
-        case class AcceptRanges() extends Header("Accept-Ranges")
-        case class Age() extends Header("Age")
-        case class Allow() extends Header("Allow")
-        case class CacheControl() extends Header("Cache-Control")
-        case class Connection() extends Header("Connection")
-        case class ContentEncoding() extends Header("Content-Encoding")
-        case class ContentLanguage() extends Header("Content-Language")
-        case class ContentLength() extends Header("Content-Length")
-        case class ContentLocation() extends Header("Content-Location")
-        case class ContentMD5() extends Header("Content-MD5")
-        case class ContentDisposition() extends Header("Content-Disposition")
-        case class ContentRange() extends Header("Content-Range")
-        case class ContentType() extends Header("Content-Type")
-        case class Date() extends Header("Date")
-        case class ETag() extends Header("ETag")
-        case class Expires() extends Header("Expires")
-        case class LastModified() extends Header("Last-Modified")
-        case class Link() extends Header("Link")
-        case class Location() extends Header("Location")
-        case class P3P() extends Header("P3P")
-        case class Pragma() extends Header("Pragma")
-        case class ProxyAuthenticate() extends Header("Proxy-Authenticate")
-        case class Refresh() extends Header("Refresh")
-        case class RetryAfter() extends Header("Retry-After")
-        case class Server() extends Header("Server")
-        case class SetCookie() extends Header("Set-Cookie")
-        case class StrictTransportSecurity() extends Header("Strict-Transport-Security")
-        case class Trailer() extends Header("Trailer")
-        case class TransferEncoding() extends Header("Transfer-Encoding")
-        case class Vary() extends Header("Vary")
-        case class Via() extends Header("Via")
-        case class Warning() extends Header("Warning")
-        case class WWWAuthenticate() extends Header("WWW-Authenticate")
+        case class AcceptRanges() extends HeaderField("Accept-Ranges")
+        case class Age() extends HeaderField("Age")
+        case class Allow() extends HeaderField("Allow")
+        case class CacheControl() extends HeaderField("Cache-Control")
+        case class Connection() extends HeaderField("Connection")
+        case class ContentEncoding() extends HeaderField("Content-Encoding")
+        case class ContentLanguage() extends HeaderField("Content-Language")
+        case class ContentLength() extends HeaderField("Content-Length")
+        case class ContentLocation() extends HeaderField("Content-Location")
+        case class ContentMD5() extends HeaderField("Content-MD5")
+        case class ContentDisposition()
+            extends HeaderField("Content-Disposition")
+        case class ContentRange() extends HeaderField("Content-Range")
+        case class ContentType() extends HeaderField("Content-Type")
+        case class Date() extends HeaderField("Date")
+        case class ETag() extends HeaderField("ETag")
+        case class Expires() extends HeaderField("Expires")
+        case class LastModified() extends HeaderField("Last-Modified")
+        case class Link() extends HeaderField("Link")
+        case class Location() extends HeaderField("Location")
+        case class P3P() extends HeaderField("P3P")
+        case class Pragma() extends HeaderField("Pragma")
+        case class ProxyAuthenticate()
+            extends HeaderField("Proxy-Authenticate")
+        case class Refresh() extends HeaderField("Refresh")
+        case class RetryAfter() extends HeaderField("Retry-After")
+        case class Server() extends HeaderField("Server")
+        case class SetCookie() extends HeaderField("Set-Cookie")
+        case class StrictTransportSecurity()
+            extends HeaderField("Strict-Transport-Security")
+        case class Trailer() extends HeaderField("Trailer")
+        case class TransferEncoding() extends HeaderField("Transfer-Encoding")
+        case class Vary() extends HeaderField("Vary")
+        case class Via() extends HeaderField("Via")
+        case class Warning() extends HeaderField("Warning")
+        case class WWWAuthenticate() extends HeaderField("WWW-Authenticate")
     }
+
+    /**
+     * A Header Tuple with the name and value
+     */
+    case class Header( val field: HeaderField, val value: String )
 
     /**
      * The base class for the enumeration of common Content-Type headers
@@ -134,10 +108,6 @@ object Response {
      * The supported list of HTTP methods
      */
     object ContentType {
-        implicit def contentTypeToString (
-            mimeType: ContentType
-        ): String = mimeType.mimeType
-
         case class Atom() extends ContentType("application/atom+xml")
         case class Bin() extends ContentType("application/octet-stream")
         case class Bmp() extends ContentType("image/bmp")
@@ -161,48 +131,52 @@ object Response {
     }
 
     /**
-     * A helper for building an HTML response
+     * A flag to flush the response for actor based responses
      */
-    def html (
-        content: Renderable = Renderable(""),
-        code: Response.Code = Response.Code.OK()
-    ): Response = Response( content, code ).isHtml
+    case class Flush()
 
     /**
-     * Redirects the client using a 302 Found response code
+     * A finalization flag for actor based responses
      */
-    def found ( url: String ): Response
-        = new Response( "", Response.Code.Found(), Map("Location" -> url) )
-
-    /**
-     * Redirects the client using a 301 Moved response code
-     */
-    def moved ( url: String ): Response
-        = new Response( "", Response.Code.Moved(), Map("Location" -> url) )
+    case class Done()
 
 }
 
 /**
  * The bundled response data for a request
  */
-class Response (
-    val content: Renderable = Renderable(""),
-    val code: Response.Code = Response.Code.OK(),
-    val headers: Map[String,String] = Map()
-) {
+trait Response {
 
     /**
-     * Creates a new copy of this response with the given header
+     * Sets a header in this response
      */
-    def header( header: (String, String) ): Response
-        = new Response( content, code, headers + header )
+    def header( header: Response.Header ): Response
 
     /**
-     * Creates a new copy of this response with the given header, but only
-     * if it doesn't already exist
+     * Sets the status code in this response
      */
-    def addHeader( header: (String, String) ): Response
-        = if ( headers.isDefinedAt( header._1 ) ) this else this.header(header)
+    def code ( code: Response.Code ): Response
+
+    /**
+     * Appens the given content to this response
+     */
+    def content ( content: Renderable ): Response
+
+    /**
+     * Flushes the response
+     */
+    def flush (): Response
+
+    /**
+     * Finalizes this response
+     */
+    def done (): Response
+
+    /**
+     * Sets a header in this response
+     */
+    def header( field: Response.HeaderField, value: String ): Response
+        = header( Response.Header( field, value ) )
 
     /**
      * Creates a new copy of this response with the given content type
@@ -210,34 +184,25 @@ class Response (
     def contentType ( value: String ): Response
         = header( Response.Header.ContentType(), value )
 
-
     /**
      * Clones this response and sets the Content-Type to HTML
      */
-    def isHtml: Response = contentType( Response.ContentType.HTML() )
+    def isHtml: Response = contentType( Response.ContentType.HTML().mimeType )
 
     /**
      * Clones this response and sets the Content-Type to XML
      */
-    def isXML: Response = contentType( Response.ContentType.XML() )
+    def isXML: Response = contentType( Response.ContentType.XML().mimeType )
 
     /**
      * Clones this response and sets the Content-Type to JSON
      */
-    def isJSON: Response = contentType( Response.ContentType.JSON() )
+    def isJSON: Response = contentType( Response.ContentType.JSON().mimeType )
 
     /**
      * Clones this response and sets the Content-Type to Plain Text
      */
-    def isText: Response = contentType( Response.ContentType.Text() )
-
-
-    /**
-     * A helper method that builds a new response based on this one with
-     * a different response code.
-     */
-    def code ( newCode: Response.Code )
-        = new Response( content, newCode, headers )
+    def isText: Response = contentType( Response.ContentType.Text().mimeType )
 
     /**
      * Builds a new response with a 200 OK
@@ -264,16 +229,23 @@ class Response (
      */
     def serverError = code( Response.Code.InternalServerError() )
 
+    /**
+     * A helper for building an HTML response
+     */
+    def html ( renderable: Renderable ): Response
+        = content( renderable ).isHtml
 
     /**
-     * {@inheritDoc}
+     * Redirects the client using a 302 Found response code
      */
-    override def toString: String = {
-        "[Response %s {%s}]".format(
-            code.code,
-            headers.map( (h) => h._1 + ": " + h._2 ).mkString(", ")
-        )
-    }
+    def found ( url: String ): Response
+        = code( Response.Code.Found() ).header(Response.Header.Location(), url)
+
+    /**
+     * Redirects the client using a 301 Moved response code
+     */
+    def moved ( url: String ): Response
+        = code( Response.Code.Moved() ).header(Response.Header.Location(), url)
 
 }
 

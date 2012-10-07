@@ -29,13 +29,13 @@ class Dispatcher (
     /**
      * The handler to use when an exception is thrown
      */
-    private var error: Option[(Throwable, Request) => Response] = None
+    private var error: Option[(Throwable, Request, Response) => Unit] = None
 
     /**
      * The handler to use when nothing matches and there is no default
      */
-    final lazy private val unresolvable = Handler{ (request) =>
-        Response.html(
+    final lazy private val unresolvable = Handler { (request, response) =>
+        response.notFound.html(
             <html>
                 <head><title>404 Not Found</title></head>
                 <body>
@@ -45,8 +45,7 @@ class Dispatcher (
                         <span>{request.url.path.getOrElse("/").toString}</span>
                     </p>
                 </body>
-            </html>,
-            Response.Code.NotFound()
+            </html>
         )
     }
 
@@ -71,7 +70,9 @@ class Dispatcher (
     /**
      * Changes the error handler for this dispatcher
      */
-     def error ( handler: (Throwable, Request) => Response ): Dispatcher = {
+    def error (
+        handler: (Throwable, Request, Response) => Unit
+    ): Dispatcher = {
         error.synchronized {
             error = Some(handler)
         }
@@ -82,7 +83,7 @@ class Dispatcher (
      * Checks the list of possible handlers and executes
      * the one that matches
      */
-    override def handle( request: Request ): Response = {
+    override def handle ( request: Request, response: Response ): Unit = {
 
         val matched = entries.find( entry => {
             entry.matcher.matches(request) match {
@@ -95,21 +96,23 @@ class Dispatcher (
 
         try {
             matched match {
-                case None => default.getOrElse( unresolvable ).handle( request )
-                case Some( (params, handler) ) => {
-                    handler.handle( request.withParams(params) )
-                }
+                case None =>
+                    default.getOrElse(unresolvable).handle(request, response)
+
+                case Some( (params, handler) ) =>
+                    handler.handle( request.withParams(params), response )
             }
         }
         catch {
             case err: Throwable => error match {
                 case Some(_) => {
                     logger.error( err )
-                    error.get( err, request )
+                    error.get( err, request, response )
                 }
                 case None => { throw err }
             }
         }
+
     }
 
 }

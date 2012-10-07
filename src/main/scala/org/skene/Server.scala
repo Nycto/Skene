@@ -23,10 +23,7 @@ object Server {
         server.join();
     }
 
-    def apply ( port: Int, handler: => Response ): Unit
-        = apply( port, Handler(handler) )
-
-    def apply ( port: Int, handler: (Request) => Response ): Unit
+    def apply ( port: Int, handler: (Request, Response) => Unit ): Unit
         = apply( port, Handler(handler) )
 
 }
