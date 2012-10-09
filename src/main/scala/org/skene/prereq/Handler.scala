@@ -10,6 +10,11 @@ trait Prereq {
      */
     def request: Request
 
+    /**
+     * The response that will be sent back
+     */
+    def response: Response
+
     /** {@inheritDoc} */
     override def toString = "Prereq(%s)".format( request )
 
@@ -58,6 +63,7 @@ class PrereqHandler[T] private[skene] (
         )(
             new Bundle().add( classOf[Prereq], new Prereq {
                 override val request = req
+                override val response = resp
             })
         )
     }
