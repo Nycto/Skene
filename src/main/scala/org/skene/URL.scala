@@ -3,6 +3,8 @@ package org.skene
 import java.net.{URL => JavaURL}
 import java.lang.StringBuffer
 
+import scala.language.implicitConversions
+
 /**
  * Static builders for the URL object
  */

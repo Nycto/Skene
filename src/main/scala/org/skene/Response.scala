@@ -5,6 +5,8 @@ import java.lang.StringBuilder
 import java.lang.StringBuffer
 import scala.xml.NodeSeq
 
+import scala.language.implicitConversions
+
 /**
  * Companion object...
  */

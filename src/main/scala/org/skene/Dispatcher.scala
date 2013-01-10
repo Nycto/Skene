@@ -102,7 +102,7 @@ class Dispatcher (
             }
         }
         catch {
-            case err => error match {
+            case err: Throwable => error match {
                 case Some(_) => {
                     logger.error( err )
                     error.get( err, request )

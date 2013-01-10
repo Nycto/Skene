@@ -1,5 +1,7 @@
 package org.skene
 
+import scala.reflect.ClassTag
+
 
 /**
  * An object that has the ability to build a Prerequisite object
@@ -43,8 +45,8 @@ private class ClassList ( val clazzes: Set[Class[_]] ) {
     /**
      * Creates a new class list from a set of manifests
      */
-    def this ( clazzes: ClassManifest[_]* )
-        = this( Set( clazzes:_* ).map(_.erasure) )
+    def this ( clazzes: ClassTag[_]* )
+        = this( Set( clazzes:_* ).map(_.runtimeClass) )
 
 }
 
@@ -65,7 +67,7 @@ private class RegistryData(
      * Registers a new builder for a given type
      */
     def register[T: Manifest] ( builder: Provider[T] ): RegistryData
-        = new RegistryData( builders + ((manifest[T].erasure, builder)) )
+        = new RegistryData( builders + ((manifest[T].runtimeClass, builder)) )
 
     /**
      * Registers a callback to act as a Prereq provider

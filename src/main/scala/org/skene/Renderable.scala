@@ -6,6 +6,8 @@ import java.lang.StringBuffer
 
 import scala.xml.NodeSeq
 
+import scala.language.implicitConversions
+
 /**
  * A piece of data that can be rendered down to a string
  */

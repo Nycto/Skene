@@ -53,7 +53,7 @@ trait Handler extends HttpServlet {
         val result = try {
             handle( wrappedReq )
         }
-        catch { case err => {
+        catch { case err: Throwable => {
             logger.error( err )
             Response(
                 content =

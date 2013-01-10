@@ -36,7 +36,8 @@ class Bundle private[skene] (
     /**
      * Returns one of the specific data types from this bundle
      */
-    def get[T: Manifest]: T = joined( manifest[T].erasure ).asInstanceOf[T]
+    def get[T: Manifest]: T
+        = joined( manifest[T].runtimeClass ).asInstanceOf[T]
 
     /**
      * Adds a new class to this bundle

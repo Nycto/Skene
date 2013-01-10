@@ -25,7 +25,7 @@ private class BundleCollect (
      * Adds a new object to this collection
      */
     def add[T: Manifest]( data: T ): BundleCollect
-        = add( manifest[T].erasure, data )
+        = add( manifest[T].runtimeClass, data )
 
     /**
      * Adds a new class and all of its dependencies
