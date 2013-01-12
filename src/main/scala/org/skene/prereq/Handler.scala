@@ -35,12 +35,12 @@ class PrereqHandler[T] private[skene] (
     private val threader: ( => Unit ) => Unit
 ) extends Handler {
 
-    /** @{inheritDoc} */
+    /** {@inheritDoc} */
     override def toString = "PrereqHandler(%s)".format(
         depend.map(_.getSimpleName).mkString(", ")
     )
 
-    /** @{inheritDoc} */
+    /** {@inheritDoc} */
     override def handle( req: Request, resp: Response ): Unit = {
 
         // The method that gets invoked once all the providers have
