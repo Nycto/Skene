@@ -1,6 +1,6 @@
 name := "Skene"
 
-scalaVersion := "2.10.0-RC5"
+scalaVersion := "2.10.0"
 
 version := "0.1"
 
@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
     ),
     "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided->default",
     "org.slf4j" % "slf4j-simple" % "1.7.2",
-    "org.specs2" %% "specs2" % "1.12.3" % "test",
-    "org.mockito" % "mockito-all" % "1.9.5-rc1" % "test"
+    "org.specs2" %% "specs2" % "1.13" % "test",
+    "org.mockito" % "mockito-all" % "1.9.5" % "test"
 )
 
