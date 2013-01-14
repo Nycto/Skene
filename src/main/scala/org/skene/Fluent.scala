@@ -139,10 +139,3 @@ trait Skene extends Handler {
 }
 
 
-/**
- * The base class for Skene servers
- */
-abstract class SkeneApp ( private val port: Int = 80 ) extends Skene {
-    def main(args : Array[String]): Unit = Server( port, this )
-}
-
