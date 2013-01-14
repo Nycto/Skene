@@ -16,7 +16,7 @@ Putting to together a Servlet that works with Jetty or Tomcat is as easy as:
 ```scala
 package main.scala.com.example
 
-import org.skene._
+import com.roundeights.skene._
 
 class BasicApp extends Skene {
 
