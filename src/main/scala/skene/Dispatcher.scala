@@ -46,7 +46,7 @@ class Dispatcher (
                     </p>
                 </body>
             </html>
-        )
+        ).done
     }
 
     /**
