@@ -205,6 +205,18 @@ trait Response {
     def isText: Response = contentType( Response.ContentType.Text().mimeType )
 
     /**
+     * A helper for building an HTML response
+     */
+    def html ( renderable: Renderable ): Response
+        = content( renderable ).isHtml
+
+    /**
+     * A helper for building a text response
+     */
+    def text ( renderable: Renderable ): Response
+        = content( renderable ).isText
+
+    /**
      * Builds a new response with a 200 OK
      */
     def ok = code( Response.Code.OK() )
@@ -228,12 +240,6 @@ trait Response {
      * Builds a new response with a 500 internal server error code
      */
     def serverError = code( Response.Code.InternalServerError() )
-
-    /**
-     * A helper for building an HTML response
-     */
-    def html ( renderable: Renderable ): Response
-        = content( renderable ).isHtml
 
     /**
      * Redirects the client using a 302 Found response code
