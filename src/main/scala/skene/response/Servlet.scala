@@ -6,15 +6,15 @@ import scala.collection.mutable.MutableList
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.AsyncContext
 
-import com.roundeights.skene.Response
-import com.roundeights.skene.Renderable
+import com.roundeights.skene.{Response, Renderable, Recover}
 
 /**
  * A response that wraps a servlet
  */
 class ServletResponse (
     async: AsyncContext,
-    response: HttpServletResponse
+    response: HttpServletResponse,
+    private val recovery: Recover
 ) extends ActorResponse {
 
     /**
@@ -51,6 +51,10 @@ class ServletResponse (
             }
         }
     }
+
+    /** {@inheritDoc} */
+    override def recover ( action: => Unit ): Unit
+        = recovery.from(this) { () => action }
 
 }
 

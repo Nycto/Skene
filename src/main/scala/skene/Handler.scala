@@ -56,26 +56,17 @@ trait Handler extends HttpServlet {
         val async = request.startAsync();
 
         val wrappedReq = new ServletRequest( request )
-        val wrappedResp = new ServletResponse( async, response ).isHtml
+        val wrappedResp = new ServletResponse(
+            async, response, new Recover( logger )
+        ).isHtml
 
         logger.request( wrappedReq )
 
         Actor.actor {
-
-            try {
+            wrappedResp.recover {
                 // Pass the request off to the handler, but watch for errors
                 handle( wrappedReq, wrappedResp )
             }
-            catch { case err: Throwable => {
-                logger.error( err )
-                wrappedResp.serverError.html(
-                    <html>
-                        <head><title>500 Internal Server Error</title></head>
-                        <body><h1>500 Internal Server Error</h1></body>
-                    </html>
-                ).done()
-            } }
-
         }
     }
 

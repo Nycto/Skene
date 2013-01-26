@@ -53,7 +53,9 @@ class PrereqHandler[T] private[skene] (
             ( forClazz: Class[_], next: (Bundle) => Unit )
             ( bundle: Bundle ): Unit
         = threader {
-            builders(forClazz).build( forClazz, bundle, next )
+            resp.recover {
+                builders(forClazz).build( forClazz, bundle, next )
+            }
         }
 
         depend.foldRight[(Bundle) => Unit](
