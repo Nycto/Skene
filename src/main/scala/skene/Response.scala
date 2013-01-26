@@ -2,6 +2,7 @@ package com.roundeights.skene
 
 import scala.language.implicitConversions
 
+
 /**
  * Companion object...
  */
@@ -142,6 +143,7 @@ object Response {
 
 }
 
+
 /**
  * The bundled response data for a request
  */
@@ -215,6 +217,18 @@ trait Response {
      */
     def text ( renderable: Renderable ): Response
         = content( renderable ).isText
+
+    /**
+     * A helper for building a json response
+     */
+    def json ( renderable: Renderable ): Response
+        = content( renderable ).isJSON
+
+    /**
+     * A helper for building an XML response
+     */
+    def xml ( renderable: Renderable ): Response
+        = content( renderable ).isXML
 
     /**
      * Builds a new response with a 200 OK
