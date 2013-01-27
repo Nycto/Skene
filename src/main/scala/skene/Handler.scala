@@ -3,10 +3,10 @@ package com.roundeights.skene
 import com.roundeights.skene.request.ServletRequest
 import com.roundeights.skene.response.ServletResponse
 
-import scala.actors.Actor
-
 import javax.servlet.http.{HttpServlet,HttpServletRequest,HttpServletResponse}
 import javax.servlet.AsyncContext
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Methods for quickly building small handlers
@@ -16,7 +16,10 @@ object Handler {
     /**
      * Creates a handler from a callback
      */
-    def apply( callback: (Request, Response) => Unit ): Handler = new Handler {
+    def apply
+        ( callback: (Request, Response) => Unit )
+        ( implicit context: ExecutionContext )
+    : Handler = new Handler {
         def handle( request: Request, response: Response ): Unit
             = callback( request, response )
     }
@@ -24,7 +27,10 @@ object Handler {
     /**
      * Creates a handler from a callback
      */
-    def apply( callback: (Response) => Unit ): Handler = new Handler {
+    def apply
+        ( callback: (Response) => Unit )
+        ( implicit context: ExecutionContext )
+    : Handler = new Handler {
         def handle( request: Request, response: Response ): Unit
             = callback( response )
     }
@@ -34,7 +40,9 @@ object Handler {
 /**
  * Defines an object that can handle a request
  */
-trait Handler extends HttpServlet {
+abstract class Handler (
+    implicit context: ExecutionContext
+) extends HttpServlet {
 
     /**
      * The default logger to be overridden.
@@ -62,12 +70,12 @@ trait Handler extends HttpServlet {
 
         logger.request( wrappedReq )
 
-        Actor.actor {
-            wrappedResp.recover {
+        context.execute( new Runnable {
+            override def run = wrappedResp.recover {
                 // Pass the request off to the handler, but watch for errors
                 handle( wrappedReq, wrappedResp )
             }
-        }
+        } )
     }
 
     /** {@inheritDoc} */

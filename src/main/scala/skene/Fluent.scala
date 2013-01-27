@@ -1,12 +1,14 @@
 package com.roundeights.skene
 
 import com.roundeights.skene._
-
+import scala.concurrent.ExecutionContext
 
 /**
  * A fluent interface for building Skene dispatchers
  */
-trait Skene extends Handler {
+abstract class Skene (
+    implicit context: ExecutionContext
+) extends Handler {
 
     /**
      * The dispatcher to collect into

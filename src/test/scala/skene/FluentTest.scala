@@ -4,6 +4,7 @@ import org.specs2.mutable._
 import org.specs2.mock._
 
 import com.roundeights.skene._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class SkeneTest extends Specification with Mockito {

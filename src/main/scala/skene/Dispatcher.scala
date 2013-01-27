@@ -1,15 +1,17 @@
 package com.roundeights.skene
 
 import com.roundeights.skene.util.LinkedList
+import scala.concurrent.ExecutionContext
 
 /**
  * Dispatches a request against a set of handlers based on matching rules
  *
  * This class is thread safe
  */
-class Dispatcher (
-    override protected val logger: Logger = Logger.logger
-) extends Handler {
+class Dispatcher
+    ( override protected val logger: Logger = Logger.logger )
+    ( implicit context: ExecutionContext )
+extends Handler {
 
     /**
      * A pairing of a matcher and it's handler
