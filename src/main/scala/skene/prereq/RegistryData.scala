@@ -1,5 +1,6 @@
 package com.roundeights.skene
 
+import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 
 /**
@@ -35,10 +36,10 @@ private class ClassList ( val clazzes: Set[Class[_]] ) {
  * The internal implementation of the Registry. This is separated out
  * to simplify the Registry class
  */
-private class RegistryData(
-    val builders: Map[Class[_], Provider[_]] = Map(),
-    private val threader: ( => Unit ) => Unit
-) {
+private class RegistryData
+    ( val builders: Map[Class[_], Provider[_]] = Map() )
+    ( implicit context: ExecutionContext )
+{
 
     /**
      * A set of all the registered prereqs
@@ -49,10 +50,7 @@ private class RegistryData(
      * Registers a new builder for a given type
      */
     def register[T: Manifest] ( builder: Provider[T] ): RegistryData
-        = new RegistryData(
-            builders + ((manifest[T].runtimeClass, builder)),
-            threader
-        )
+        = new RegistryData( builders + ((manifest[T].runtimeClass, builder)) )
 
     /**
      * Registers a callback to act as a Prereq provider
@@ -112,8 +110,7 @@ private class RegistryData(
     ): Handler = new PrereqHandler[T](
         builders,
         callback,
-        dependenciesOf( clazzList.clazzes ),
-        threader
+        dependenciesOf( clazzList.clazzes )
     )
 
 }

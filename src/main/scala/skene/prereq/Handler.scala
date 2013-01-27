@@ -1,5 +1,7 @@
 package com.roundeights.skene
 
+import scala.concurrent.ExecutionContext
+
 /**
  * The base class for generated prereq bundles
  */
@@ -31,9 +33,8 @@ trait Prereq {
 class PrereqHandler[T] private[skene] (
     builders: Registry.Builders,
     private val callback: (T, Response) => Unit,
-    private val depend: List[Class[_]],
-    private val threader: ( => Unit ) => Unit
-) extends Handler {
+    private val depend: List[Class[_]]
+)( implicit context: ExecutionContext ) extends Handler {
 
     /** {@inheritDoc} */
     override def toString = "PrereqHandler(%s)".format(
@@ -52,11 +53,11 @@ class PrereqHandler[T] private[skene] (
         def middleStep
             ( forClazz: Class[_], next: (Bundle) => Unit )
             ( bundle: Bundle ): Unit
-        = threader {
-            resp.recover {
+        = context.execute( new Runnable {
+            override def run = resp.recover {
                 builders(forClazz).build( forClazz, bundle, next )
             }
-        }
+        } )
 
         depend.foldRight[(Bundle) => Unit](
             finalStep(_)

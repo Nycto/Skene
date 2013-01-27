@@ -1,6 +1,6 @@
 package com.roundeights.skene
 
-import scala.actors.Actor
+import scala.concurrent.ExecutionContext
 
 /**
  * Companion for a Registry
@@ -32,7 +32,7 @@ object Registry {
     /**
      * Builds a new Registry
      */
-    def apply(): Registry = new Registry
+    def apply()( implicit context: ExecutionContext ): Registry = new Registry
 
 }
 
@@ -46,13 +46,8 @@ class Registry private ( private val inner: RegistryData ) {
     /**
      * The public constructor
      */
-    def this() = this( new RegistryData( threader = Actor.actor ) )
-
-    /**
-     * A constructor with an alternate threading model
-     */
-    def this( threader: ( => Unit ) => Unit )
-        = this( new RegistryData( threader = threader ) )
+    def this()( implicit context: ExecutionContext )
+        = this( new RegistryData() )
 
     /**
      * Registers a new builder for a given type

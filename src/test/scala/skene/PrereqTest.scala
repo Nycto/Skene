@@ -4,8 +4,16 @@ import org.specs2.mutable._
 import org.specs2.mock._
 
 import com.roundeights.skene._
+import scala.concurrent.ExecutionContext
+import java.util.concurrent.Executor
 
 class PrereqTest extends Specification with Mockito {
+
+    /** An execution context that runs in the calling thread */
+    implicit val context = ExecutionContext.fromExecutor(new Executor {
+        override def execute( command: Runnable ): Unit = command.run
+    })
+
 
     val request = BareRequest()
     val response = mock[Response]
@@ -99,13 +107,9 @@ class PrereqTest extends Specification with Mockito {
         }
     }
 
-    // An alternate threading method that allows the unit tests to be run
-    // without multiple threads
-    def synchronized ( thunk: => Unit ): Unit = thunk
-
     "A request with a succesfully processed prereq" should {
         "return a processed response" in {
-            val prereqs = new Registry( synchronized )
+            val prereqs = new Registry()
                 .register[Req1](
                     (next: Continue[Req1]) => next(new Req1{ val one = "1" })
                 )
@@ -132,7 +136,7 @@ class PrereqTest extends Specification with Mockito {
     "A prereq with dependencies" should {
         "be able to access those dependencies" in {
 
-            val prereqs = new Registry( synchronized )
+            val prereqs = new Registry()
                 .register[Req1](
                     (bundle: Bundle, next: Continue[Req1]) => {
                         bundle.get[Req2].two must_== "2"
@@ -164,7 +168,7 @@ class PrereqTest extends Specification with Mockito {
 
     "A request with a failing prereq" should {
 
-        val prereqs = new Registry( synchronized )
+        val prereqs = new Registry()
             .register[Req1]( (bundle: Bundle, next: Continue[Req1]) => {} )
             .register[Req2](
                 (bundle: Bundle, next: Continue[Req2])
