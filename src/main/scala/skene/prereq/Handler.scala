@@ -1,74 +1,43 @@
 package com.roundeights.skene
 
-import scala.concurrent.ExecutionContext
-
-/**
- * The base class for generated prereq bundles
- */
-trait Prereq {
-
-    /**
-     * The request that is being processed
-     */
-    def request: Request
-
-    /**
-     * The response that will be sent back
-     */
-    def response: Response
-
-    /** {@inheritDoc} */
-    override def toString = "Prereq(%s)".format( request )
-
-}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Constructs an instance of the requested type by calling all the
  * registered builders
- *
- * @param builders The map of all the registered providers
- * @param callback The callback to invoke once all the providers have passed
- * @param depend All the required data types
  */
 class PrereqHandler[T] private[skene] (
-    builders: Registry.Builders,
-    private val callback: (T, Response) => Unit,
-    private val depend: List[Class[_]]
-)( implicit context: ExecutionContext ) extends Handler {
+    private val graph: Graph[T],
+    private val action: (T, Response) => Unit
+) (
+    implicit context: ExecutionContext
+) extends Handler {
 
     /** {@inheritDoc} */
-    override def toString = "PrereqHandler(%s)".format(
-        depend.map(_.getSimpleName).mkString(", ")
-    )
+    override def toString = "PrereqHandler(%s)".format( graph )
+
+    /** Handles any errors thrown by the prereqs */
+    private def onError ( resp: Response, err: Throwable ): Unit = {
+        resp.serverError.html(
+            <html>
+                <head><title>Internal Server Error</title></head>
+                <body><h1>Internal Server Error</h1></body>
+            </html>
+        ).done
+    }
 
     /** {@inheritDoc} */
     override def handle( req: Request, resp: Response ): Unit = {
+        val future: Future[T] = graph.build( req, resp )
+        future.onFailure { case err: Throwable => onError(resp, err) }
 
-        // The method that gets invoked once all the providers have
-        // successfully executed
-        def finalStep ( bundle: Bundle ): Unit
-            = callback( bundle.asProxyOf[T](depend), resp )
-
-        // One of the midway functions that actually executes a Provider
-        def middleStep
-            ( forClazz: Class[_], next: (Bundle) => Unit )
-            ( bundle: Bundle ): Unit
-        = context.execute( new Runnable {
-            override def run = resp.recover {
-                builders(forClazz).build( forClazz, bundle, next )
+        future.onSuccess {
+            case bundle => try {
+                action( bundle, resp );
+            } catch {
+                case err: Throwable => onError(resp, err)
             }
-        } )
-
-        depend.foldRight[(Bundle) => Unit](
-            finalStep(_)
-        )(
-            middleStep(_, _)
-        )(
-            new Bundle().add( classOf[Prereq], new Prereq {
-                override val request = req
-                override val response = resp
-            })
-        )
+        }
     }
 
 }

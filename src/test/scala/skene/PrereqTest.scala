@@ -4,7 +4,7 @@ import org.specs2.mutable._
 import org.specs2.mock._
 
 import com.roundeights.skene._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Promise}
 import java.util.concurrent.Executor
 
 class PrereqTest extends Specification with Mockito {
@@ -25,7 +25,7 @@ class PrereqTest extends Specification with Mockito {
     "A request with an unregistered prereq" should {
         "raise an exception" in {
             val prereqs = Registry()
-            prereqs[Req1] ( (prereq, resp) => () ) must throwA[
+            prereqs.use[Req1].in( (prereq, resp) => () ) must throwA[
                 Registry.UnregisteredPrereq
             ]
         }
@@ -37,11 +37,11 @@ class PrereqTest extends Specification with Mockito {
                 .register[Req1](new Provider[Req1] {
                     override def dependencies = Set(classOf[Req2])
                     override def build(
-                        bundle: Bundle, next: Continue[Req1]
+                        bundle: Bundle, result: Promise[Req1]
                     ) = ()
                 })
 
-            prereqs[Req1] ( (prereq, resp) => () ) must throwA[
+            prereqs.use[Req1].in( (_, _) => () ) must throwA[
                 Registry.UnregisteredPrereq
             ]
         }
@@ -55,15 +55,17 @@ class PrereqTest extends Specification with Mockito {
 
             val prereqs = Registry()
                 .register[Req3](
-                    (next: Continue[Req3])
-                        => next(new Req3 { val three = "3" })
+                    (result: Promise[Req3]) => {
+                        result.success( new Req3 { val three = "3" } )
+                    }
                 )
                 .register[Req3Conflict](
-                    (next: Continue[Req3Conflict])
-                        => next(new Req3Conflict { val three = "Troix" })
+                    (result: Promise[Req3Conflict]) => {
+                        result.success( new Req3Conflict { val three = "Troix" } )
+                    }
                 )
 
-            prereqs[Req3, Req3Conflict] ( (req, resp) => () ) must throwA[
+            prereqs.use[Req3, Req3Conflict].in( (_, _) => () ) must throwA[
                 Registry.ConflictingPrereqs
             ]
         }
@@ -73,10 +75,18 @@ class PrereqTest extends Specification with Mockito {
             trait Req5 { override def toString = "Req5" }
 
             val prereqs = Registry()
-                .register[Req4]( (next: Continue[Req4]) => next(new Req4 {}) )
-                .register[Req5]( (next: Continue[Req5]) => next(new Req5 {}) )
+                .register[Req4](
+                    (result: Promise[Req4]) => {
+                        result.success(new Req4 {})
+                    }
+                )
+                .register[Req5](
+                    (result: Promise[Req5]) => {
+                        result.success(new Req5 {})
+                    }
+                )
 
-            prereqs[Req4, Req5] ( (req, resp) => () )
+            prereqs.use[Req4, Req5].in( (req, resp) => () )
 
             ok
         }
@@ -85,14 +95,14 @@ class PrereqTest extends Specification with Mockito {
     "The dependencies of a class" should {
         val prereqs = Registry()
             .register[Req1](
-                (next: Continue[Req1]) => { },
+                (result: Promise[Req1]) => { },
                 classOf[Req2], classOf[Req3]
             )
             .register[Req2](
-                (next: Continue[Req2]) => { },
+                (result: Promise[Req2]) => { },
                 classOf[Req3]
             )
-            .register[Req3]( (next: Continue[Req3]) => { } )
+            .register[Req3]( (result: Promise[Req3]) => { } )
 
         "be listable" in {
             prereqs.dependenciesOf( classOf[Req1] ) must_== List(
@@ -111,16 +121,22 @@ class PrereqTest extends Specification with Mockito {
         "return a processed response" in {
             val prereqs = new Registry()
                 .register[Req1](
-                    (next: Continue[Req1]) => next(new Req1{ val one = "1" })
+                    (result: Promise[Req1]) => {
+                        result.success(new Req1{ val one = "1" })
+                    }
                 )
                 .register[Req2](
-                    (next: Continue[Req2]) => next(new Req2{ val two = "2" })
+                    (result: Promise[Req2]) => {
+                        result.success(new Req2{ val two = "2" })
+                    }
                 )
                 .register[Req3](
-                    (next: Continue[Req3]) => next(new Req3{ val three = "3" })
+                    (result: Promise[Req3]) => {
+                        result.success(new Req3{ val three = "3" })
+                    }
                 )
 
-            val handler = prereqs[Req1, Req2, Req3]( (bundle, resp) => {
+            val handler = prereqs.use[Req1, Req2, Req3].in( (bundle, resp) => {
                 resp must_== response
                 bundle.request must_== request
                 bundle.one must_== "1"
@@ -138,22 +154,26 @@ class PrereqTest extends Specification with Mockito {
 
             val prereqs = new Registry()
                 .register[Req1](
-                    (bundle: Bundle, next: Continue[Req1]) => {
+                    (bundle: Bundle, result: Promise[Req1]) => {
                         bundle.get[Req2].two must_== "2"
                         bundle.get[Req3].three must_== "3"
-                        next( new Req1{ val one = "1" } )
+                        result.success( new Req1{ val one = "1" } )
                     },
                     classOf[Req2],
                     classOf[Req3]
                 )
                 .register[Req2](
-                    (next: Continue[Req2]) => next(new Req2{ val two = "2" })
+                    (result: Promise[Req2]) => {
+                        result.success(new Req2{ val two = "2" })
+                    }
                 )
                 .register[Req3](
-                    (next: Continue[Req3]) => next(new Req3{ val three = "3" })
+                    (result: Promise[Req3]) => {
+                        result.success(new Req3{ val three = "3" })
+                    }
                 )
 
-            val handler = prereqs[Req1, Req2, Req3]( (bundle, resp) => {
+            val handler = prereqs.use[Req1, Req2, Req3].in( (bundle, resp) => {
                 resp must_== response
                 bundle.request must_== request
                 bundle.one must_== "1"
@@ -169,22 +189,22 @@ class PrereqTest extends Specification with Mockito {
     "A request with a failing prereq" should {
 
         val prereqs = new Registry()
-            .register[Req1]( (bundle: Bundle, next: Continue[Req1]) => {} )
+            .register[Req1]( (bundle: Bundle, result: Promise[Req1]) => () )
             .register[Req2](
-                (bundle: Bundle, next: Continue[Req2])
+                (bundle: Bundle, result: Promise[Req2])
                     => throw new Exception("Should not be called"),
                 classOf[Req1]
             )
 
         "return the prereq response" in {
-            val handler = prereqs[Req1]( (bundle, resp) => {
+            prereqs.use[Req1].in( (bundle, resp) => {
                 throw new Exception("Callback should not be invoked")
             } )
             ok
         }
 
         "return the response from a failing dependency" in {
-            val handler = prereqs[Req2]( (bundle, resp) => {
+            prereqs.use[Req2].in( (bundle, resp) => {
                 throw new Exception("Callback should not be invoked")
             } )
             ok

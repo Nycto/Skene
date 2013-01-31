@@ -1,6 +1,6 @@
 package com.roundeights.skene
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Promise}
 
 /**
  * Companion for a Registry
@@ -59,19 +59,17 @@ class Registry private ( private val inner: RegistryData ) {
      * Registers a callback to act as a Prereq provider
      */
     def register[T: Manifest] (
-        builder: (Bundle, Continue[T]) => Unit,
+        builder: (Bundle, Promise[T]) => _,
         depends: Class[_]*
-    ): Registry
-        = new Registry( inner.register(builder, depends:_* ) )
+    ): Registry = new Registry( inner.register(builder, depends:_*) )
 
     /**
      * Registers a callback to act as a Prereq provider
      */
     def register[T: Manifest] (
-        builder: ( Continue[T] ) => Unit,
+        builder: ( Promise[T] ) => _,
         depends: Class[_]*
-    ): Registry
-        = new Registry( inner.register(builder, depends:_* ) )
+    ): Registry = new Registry( inner.register(builder, depends:_*) )
 
     /**
      * Returns the dependencies of a set of classes
@@ -82,473 +80,421 @@ class Registry private ( private val inner: RegistryData ) {
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest
-    ] ( callback: (
-        Prereq with A,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A]
-        ) )
+    ]: Graph[
+        Prereq with A
+    ] = inner.build( new ClassList(
+        manifest[A]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest
-    ] ( callback: (
-        Prereq with A with B,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B]
-        ) )
+    ]: Graph[
+        Prereq with A with B
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest
-    ] ( callback: (
-        Prereq with A with B with C,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest
-    ] ( callback: (
-        Prereq with A with B with C with D,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C with D
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest
-    ] ( callback: (
-        Prereq with A with B with C with D with E,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C with D with E
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest
-    ] ( callback: (
-        Prereq with A with B with C with D with E with F,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C with D with E with F
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest
-    ] ( callback: (
-        Prereq with A with B with C with D with E with F with G,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C with D with E with F with G
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest
-    ] ( callback: (
-        Prereq with A with B with C with D with E with F with G with H,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C with D with E with F with G with H
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest
-    ] ( callback: (
-        Prereq with A with B with C with D with E with F with G with H with I,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I]
-        ) )
+    ]: Graph[
+        Prereq with A with B with C with D with E with F with G with H with I
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J]
-        ) )
+        with J
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K]
-        ) )
+        with J with K
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L]
-        ) )
+        with J with K with L
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M]
-        ) )
+        with J with K with L with M
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N]
-        ) )
+        with J with K with L with M with N
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O]
-        ) )
+        with J with K with L with M with N with O
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P]
-        ) )
+        with J with K with L with M with N with O with P
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P with Q,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q]
-        ) )
+        with J with K with L with M with N with O with P with Q
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P with Q with R,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R]
-        ) )
+        with J with K with L with M with N with O with P with Q with R
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
-        with J with K with L with M with N with O with P with Q with R with S,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S]
-        ) )
+        with J with K with L with M with N with O with P with Q with R with S
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T]
-        ) )
+        with T
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest,
         U: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
-            manifest[U]
-        ) )
+        with T with U
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
+        manifest[U]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest,
         U: Manifest, V: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
-            manifest[U], manifest[V]
-        ) )
+        with T with U with V
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
+        manifest[U], manifest[V]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest,
         U: Manifest, V: Manifest, W: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
-            manifest[U], manifest[V], manifest[W]
-        ) )
+        with T with U with V with W
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
+        manifest[U], manifest[V], manifest[W]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest,
         U: Manifest, V: Manifest, W: Manifest, X: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W with X,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
-            manifest[U], manifest[V], manifest[W], manifest[X]
-        ) )
+        with T with U with V with W with X
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
+        manifest[U], manifest[V], manifest[W], manifest[X]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest,
         U: Manifest, V: Manifest, W: Manifest, X: Manifest, Y: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W with X with Y,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
-            manifest[U], manifest[V], manifest[W], manifest[X], manifest[Y]
-        ) )
+        with T with U with V with W with X with Y
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
+        manifest[U], manifest[V], manifest[W], manifest[X], manifest[Y]
+    ) )
 
     /**
      * Builds a new bundle of the given type
      */
-    def apply[
+    def use[
         A: Manifest, B: Manifest, C: Manifest, D: Manifest, E: Manifest,
         F: Manifest, G: Manifest, H: Manifest, I: Manifest, J: Manifest,
         K: Manifest, L: Manifest, M: Manifest, N: Manifest, O: Manifest,
         P: Manifest, Q: Manifest, R: Manifest, S: Manifest, T: Manifest,
         U: Manifest, V: Manifest, W: Manifest, X: Manifest, Y: Manifest,
         Z: Manifest
-    ] ( callback: (
+    ]: Graph[
         Prereq with A with B with C with D with E with F with G with H with I
         with J with K with L with M with N with O with P with Q with R with S
-        with T with U with V with W with X with Y with Z,
-        Response
-    ) => Unit ): Handler
-        = inner.build( callback, new ClassList(
-            manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
-            manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
-            manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
-            manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
-            manifest[U], manifest[V], manifest[W], manifest[X], manifest[Y],
-            manifest[Z]
-        ) )
+        with T with U with V with W with X with Y with Z
+    ] = inner.build( new ClassList(
+        manifest[A], manifest[B], manifest[C], manifest[D], manifest[E],
+        manifest[F], manifest[G], manifest[H], manifest[I], manifest[J],
+        manifest[K], manifest[L], manifest[M], manifest[N], manifest[O],
+        manifest[P], manifest[Q], manifest[R], manifest[S], manifest[T],
+        manifest[U], manifest[V], manifest[W], manifest[X], manifest[Y],
+        manifest[Z]
+    ) )
 
 }

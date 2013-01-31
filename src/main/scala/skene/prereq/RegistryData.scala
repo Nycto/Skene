@@ -1,6 +1,6 @@
 package com.roundeights.skene
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Promise}
 import scala.reflect.ClassTag
 
 /**
@@ -56,29 +56,29 @@ private class RegistryData
      * Registers a callback to act as a Prereq provider
      */
     def register[T: Manifest] (
-        builder: (Bundle, Continue[T]) => Unit,
+        builder: (Bundle, Promise[T]) => _,
         depends: Class[_]*
-    ): RegistryData = {
-        register( new Provider[T] {
-            override def build( bundle: Bundle, next: Continue[T] ): Unit
-                = builder(bundle, next)
+    ): RegistryData = register(
+        new Provider[T] {
+            override def build( bundle: Bundle, result: Promise[T] ): Unit
+                = builder(bundle, result)
             override def dependencies = depends.toSet
-        } )
-    }
+        }
+    )
 
     /**
      * Registers a callback to act as a Prereq provider
      */
     def register[T: Manifest] (
-        builder: ( Continue[T] ) => Unit,
+        builder: ( Promise[T] ) => _,
         depends: Class[_]*
-    ): RegistryData = {
-        register( new Provider[T] {
-            override def build( bundle: Bundle, next: Continue[T] ): Unit
-                = builder( next )
+    ): RegistryData = register(
+        new Provider[T] {
+            override def build( bundle: Bundle, result: Promise[T] ): Unit
+                = builder( result )
             override def dependencies = depends.toSet
-        } )
-    }
+        }
+    )
 
     /**
      * Returns a linearized list of all the dependencies of a set of classes
@@ -105,13 +105,9 @@ private class RegistryData
      * Constructs an instance of the requested type by calling all the
      * registered builders
      */
-    def build[T](
-        callback: (T, Response) => Unit, clazzList: ClassList
-    ): Handler = new PrereqHandler[T](
-        builders,
-        callback,
-        dependenciesOf( clazzList.clazzes )
-    )
+    def build[T]( clazzes: ClassList ): Graph[T]
+        = new Graph[T]( builders, dependenciesOf( clazzes.clazzes ) )
 
 }
+
 

@@ -1,22 +1,7 @@
 package com.roundeights.skene
 
+import scala.concurrent.{ExecutionContext, Promise, Future}
 
-/**
- * The mechanism that allows one provider to trigger the next while
- * building a Bundle
- */
-class Continue[T] private[skene] (
-    private val forClazz: Class[_],
-    private val bundle: Bundle,
-    private val next: (Bundle) => Unit
-) {
-
-    /**
-     * Continues to the next provider
-     */
-    def apply( data: T ): Unit = next( bundle.add(forClazz, data) )
-
-}
 
 /**
  * An object that has the ability to build a Prerequisite object
@@ -32,14 +17,29 @@ trait Provider[T] {
     /**
      * Builds the data type
      */
-    def build( bundle: Bundle, next: Continue[T] ): Unit
+    def build( bundle: Bundle, result: Promise[T] ): Unit
 
     /**
      * An internal method for building this provider
      */
-    private[skene] final def build(
-        forClazz: Class[_], bundle: Bundle, next: (Bundle) => Unit
-    ): Unit = build( bundle, new Continue[T](forClazz, bundle, next) )
+    private[skene] final def build
+        ( forClass: Class[_], bundle: Bundle )
+        ( implicit context: ExecutionContext )
+    : Future[Bundle] = {
+        val promise = Promise[T]
+
+        context.execute( new Runnable {
+            override def run = try {
+                build( bundle, promise )
+            } catch {
+                case err: Throwable => promise.failure( err )
+            }
+        } )
+
+        promise.future.map {
+            prereq => bundle.add( forClass, prereq )
+        }
+    }
 
 }
 
