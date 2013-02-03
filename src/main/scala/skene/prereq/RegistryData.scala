@@ -3,34 +3,6 @@ package com.roundeights.skene
 import scala.concurrent.{ExecutionContext, Promise}
 import scala.reflect.ClassTag
 
-/**
- * Wraps a list of classes to provide easy access to their properties
- */
-private class ClassList ( val clazzes: Set[Class[_]] ) {
-
-    /**
-     * Asserts that none of the classes in this class list have conflicting
-     * method interfaces
-     */
-    clazzes.foldLeft( Set[String]() ) ( (methods, clazz) => {
-
-        // Get all the methods in this class, except for toString
-        val newMethods = clazz.getMethods.map( _.getName ).toSet - "toString"
-
-        val overlap = methods.intersect( newMethods )
-        if ( overlap.size > 0 )
-            throw new Registry.ConflictingPrereqs( overlap )
-
-        methods ++ newMethods
-    } )
-
-    /**
-     * Creates a new class list from a set of manifests
-     */
-    def this ( clazzes: ClassTag[_]* )
-        = this( Set( clazzes:_* ).map(_.runtimeClass) )
-
-}
 
 /**
  * The internal implementation of the Registry. This is separated out
@@ -40,11 +12,6 @@ private class RegistryData
     ( val builders: Map[Class[_], Provider[_]] = Map() )
     ( implicit context: ExecutionContext )
 {
-
-    /**
-     * A set of all the registered prereqs
-     */
-    private val registered: Set[Class[_]] = builders.keySet
 
     /**
      * Registers a new builder for a given type
@@ -102,11 +69,38 @@ private class RegistryData
     }
 
     /**
+     * Asserts that none of a given set of classes have conflicting interfaces
+     */
+    def checkConflicts ( clazzes: Seq[Class[_]] ): Unit = {
+        clazzes.foldLeft( Set[String]() ) ( (methods, clazz) => {
+
+            // Get all the methods in this class, except for toString
+            val newMethods = clazz.getMethods.map(_.getName).toSet - "toString"
+
+            val overlap = methods.intersect( newMethods )
+            if ( overlap.size > 0 )
+                throw new Registry.ConflictingPrereqs( overlap )
+
+            methods ++ newMethods
+        } )
+    }
+
+    /**
      * Constructs an instance of the requested type by calling all the
      * registered builders
      */
-    def build[T]( clazzes: ClassList ): Graph[T]
-        = new Graph[T]( builders, dependenciesOf( clazzes.clazzes ) )
+    def build[T]( clazzes: Set[Class[_]] ): Graph[T] = {
+        val resolved = dependenciesOf( clazzes )
+        checkConflicts( resolved )
+        new Graph[T]( builders, resolved )
+    }
+
+    /**
+     * Constructs an instance of the requested type by calling all the
+     * registered builders
+     */
+    def build[T]( clazzes: ClassTag[_]* ): Graph[T]
+        = build( Set( clazzes:_* ).map(_.runtimeClass) )
 
 }
 

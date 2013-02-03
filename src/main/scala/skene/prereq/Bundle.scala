@@ -29,8 +29,18 @@ class Bundle private[skene] (
     /**
      * Adds a new class to this bundle
      */
-    private[skene] def add[T] ( clazz: Class[_], value: T )
-        = new Bundle( joined + ((clazz, value)) )
+    private[skene] def add[T] ( clazz: Class[_], value: T ): Bundle = {
+        if ( !clazz.isInstance(value) )
+            throw new Exception("Bundle add mismatch")
+
+        new Bundle( joined + ((clazz, value)) )
+    }
+
+    /**
+     * Adds a new class to this bundle
+     */
+    private[skene] def add[T: Manifest] ( value: T ): Bundle
+        = add( manifest[T].runtimeClass, value )
 
     /** {@inheritDoc} */
     override def invoke(
@@ -53,10 +63,19 @@ class Bundle private[skene] (
     /**
      * Returns this bundle as an instance of the given class
      */
-    private[skene] def asProxyOf[U]( clazzes: List[Class[_]]): U = {
+    private[skene] def asProxyOf[U]( clazzes: Seq[Class[_]] ): U = {
+        val missing = clazzes.toSet.diff( joined.keySet )
+
+        if ( missing.size > 0 ) {
+            throw new Exception(
+                "Bundle is missing the following classes: "
+                + missing.map( _.getSimpleName ).mkString(", ")
+            )
+        }
+
         Proxy.newProxyInstance(
             this.getClass.getClassLoader,
-            (classOf[Prereq] :: clazzes).toArray,
+            clazzes.toArray,
             this
         )
         .asInstanceOf[U]

@@ -45,7 +45,7 @@ class Graph[T] private[skene] (
         def collect ( clazzes: List[Class[_]], bundle: Bundle ): Unit = {
             clazzes match {
                 case Nil => promise.success(
-                    bundle.asProxyOf[T](dependencies)
+                    bundle.asProxyOf[T](classOf[Prereq] :: dependencies)
                 )
                 case head :: tail => {
                     val future = builders( head ).build( head, bundle )
