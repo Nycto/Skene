@@ -7,7 +7,7 @@ import com.roundeights.skene._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-class SkeneTest extends Specification with Mockito {
+class FluentTest extends Specification with Mockito {
 
     /**
      * A helper for asserting that a handler will be called for a given URL

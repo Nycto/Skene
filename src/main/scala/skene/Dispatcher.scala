@@ -2,6 +2,39 @@ package com.roundeights.skene
 
 import com.roundeights.skene.util.LinkedList
 import scala.concurrent.ExecutionContext
+import scala.annotation.tailrec
+
+/**
+ * Companion
+ */
+object Dispatcher {
+
+    /**
+     * The type for error handlers
+     */
+    type OnError = (Request, Response) => PartialFunction[Throwable, Unit]
+
+    /**
+     * The handler to use when nothing matches and there is no default
+     */
+    def onUnmatched( implicit context: ExecutionContext ): Handler = {
+        Handler { (request, response) =>
+            response.notFound.html(
+                <html>
+                    <head><title>404 Not Found</title></head>
+                    <body>
+                        <h1>404 Not Found</h1>
+                        <p>
+                            The requested resource could not be located:
+                            <span>{request.url.path.getOrElse("/").toString}</span>
+                        </p>
+                    </body>
+                </html>
+            ).done
+        }
+    }
+
+}
 
 /**
  * Dispatches a request against a set of handlers based on matching rules
@@ -9,99 +42,57 @@ import scala.concurrent.ExecutionContext
  * This class is thread safe
  */
 class Dispatcher (
+    private val entries: List[(Matcher, Handler)] = Nil,
+    private val default: Option[Handler] = None,
+    private val onError: Option[Dispatcher.OnError] = None
+)(
     implicit context: ExecutionContext
 ) extends Handler {
 
     /**
-     * A pairing of a matcher and it's handler
+     * The list of matchers, ordered for faster parsing
      */
-    private class Entry ( val matcher: Matcher, val handler: Handler )
-
-    /**
-     * The list of entries collected in this dispatcher
-     */
-    private val entries = new LinkedList[Entry]
-
-    /**
-     * The default handler to use when none of the matchers apply
-     */
-    private var default: Option[Handler] = None
-
-    /**
-     * The handler to use when an exception is thrown
-     */
-    private var error:
-        Option[(Request, Response) => PartialFunction[Throwable, Unit]]
-        = None
-
-    /**
-     * The handler to use when nothing matches and there is no default
-     */
-    final lazy private val unresolvable = Handler { (request, response) =>
-        response.notFound.html(
-            <html>
-                <head><title>404 Not Found</title></head>
-                <body>
-                    <h1>404 Not Found</h1>
-                    <p>
-                        The requested resource could not be located:
-                        <span>{request.url.path.getOrElse("/").toString}</span>
-                    </p>
-                </body>
-            </html>
-        ).done
-    }
+    private lazy val reversed = entries.reverse
 
     /**
      * Adds a matcher/handler pair to this Dispatcher
      */
-    def add ( matcher: Matcher, handler: Handler ): Dispatcher = {
-        entries.add( new Entry(matcher, handler) )
-        this
-    }
+    def add ( matcher: Matcher, handler: Handler )
+        = new Dispatcher( (matcher -> handler) :: entries, default, onError )
 
     /**
      * Changes the default handler for this dispatcher
      */
-    def default ( handler: Handler ): Dispatcher = {
-        default.synchronized {
-            default = Some(handler)
-        }
-        this
-    }
+    def default ( handler: Handler )
+        = new Dispatcher( entries, Some(handler), onError )
 
     /**
      * Changes the error handler for this dispatcher
      */
-    def error (
-        handler: (Request, Response) => PartialFunction[Throwable, Unit]
-    ): Dispatcher = {
-        error.synchronized {
-            error = Some(handler)
-        }
-        this
-    }
+    def error ( handler: Dispatcher.OnError ): Dispatcher
+        = new Dispatcher( entries, default, Some(handler) )
 
-    /**
-     * Checks the list of possible handlers and executes
-     * the one that matches
-     */
+    /** {@inheritDoc} */
     override def handle (
         recover: Recover, request: Request, response: Response
     ): Unit = {
 
-        val matched = entries.find( entry => {
-            entry.matcher.matches(request) match {
-                case Matcher.Result(false, _) => None
-                case Matcher.Result(true, params) => {
-                    Some( (params, entry.handler) )
+        @tailrec def findMatch (
+            remaining: List[(Matcher, Handler)]
+        ): Option[(Map[String,String], Handler)] = remaining match {
+            case Nil => None
+            case head :: tail => {
+                head._1.matches(request) match {
+                    case Matcher.Result(true, params)
+                        => Some( (params, head._2) )
+                    case Matcher.Result(false, _) => findMatch( tail )
                 }
             }
-        })
+        }
 
         // If a specific error handler has been defined, use it. Otherwise,
         // use the default error recovery object
-        val customRecover = error match {
+        val customRecover = onError match {
             case None => recover
             case Some(onError) =>
                 Recover.using( onError( request, response ) )
@@ -109,10 +100,12 @@ class Dispatcher (
         }
 
         customRecover.from {
-            matched match {
-                case None => default.getOrElse(unresolvable).handle(
-                    customRecover, request, response
-                )
+            findMatch( reversed ) match {
+                case None => {
+                    default
+                        .getOrElse( Dispatcher.onUnmatched )
+                        .handle( customRecover, request, response )
+                }
 
                 case Some( (params, handler) ) => handler.handle(
                     customRecover, request.withParams(params), response

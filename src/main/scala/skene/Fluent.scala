@@ -2,6 +2,7 @@ package com.roundeights.skene
 
 import com.roundeights.skene._
 import scala.concurrent.ExecutionContext
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A fluent interface for building Skene dispatchers
@@ -13,7 +14,13 @@ abstract class Skene (
     /**
      * The dispatcher to collect into
      */
-    private val dispatcher = new Dispatcher
+    private val dispatcher = new AtomicReference( new Dispatcher )
+
+    /**
+     * Adds a new matcher
+     */
+    def when ( matcher: Matcher )( handler: Handler ): Unit
+        = dispatcher.set( dispatcher.get.add( matcher, handler ) )
 
     /**
      * A helper class for fluently building a dispatcher
@@ -21,16 +28,16 @@ abstract class Skene (
     class Fluent ( private val matcher: Matcher ) {
 
         def apply ( callback: (Recover, Request, Response) => Unit ): Unit
-            = dispatcher.add( matcher, Handler(callback) )
+            = when( matcher )( Handler(callback) )
 
         def apply ( callback: (Request, Response) => Unit ): Unit
-            = dispatcher.add( matcher, Handler(callback) )
+            = when( matcher )( Handler(callback) )
 
         def apply ( callback: (Response) => Unit ): Unit
-            = dispatcher.add( matcher, Handler(callback) )
+            = when( matcher )( Handler(callback) )
 
         def apply ( handler: Handler ): Unit
-            = dispatcher.add( matcher, handler )
+            = when( matcher )( handler )
 
         /**
          * Builds a new Fluent matcher that requires this matcher and another
@@ -52,7 +59,7 @@ abstract class Skene (
     override def handle(
         recover: Recover, request: Request, response: Response
     ): Unit
-        = dispatcher.handle( recover, request, response )
+        = dispatcher.get.handle( recover, request, response )
 
     /**
      * Adds a handler for any request matching the given path
@@ -109,7 +116,8 @@ abstract class Skene (
     /**
      * Sets up a default handler
      */
-    def default ( handler: Handler ): Unit = dispatcher.default( handler )
+    def default ( handler: Handler ): Unit
+        = dispatcher.set( dispatcher.get.default( handler ) )
 
     /**
      * Sets up a default handler from a callback
@@ -122,7 +130,7 @@ abstract class Skene (
      */
     def error (
         handler: (Request, Response) => PartialFunction[Throwable, Unit]
-    ): Unit = dispatcher.error( handler )
+    ): Unit = dispatcher.set( dispatcher.get.error( handler ) )
 
     /**
      * Sets up a handler for the root directory
