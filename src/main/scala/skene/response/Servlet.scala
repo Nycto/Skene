@@ -13,8 +13,7 @@ import com.roundeights.skene.{Response, Renderable, Recover}
  */
 class ServletResponse (
     async: AsyncContext,
-    response: HttpServletResponse,
-    private val recovery: Recover
+    response: HttpServletResponse
 ) extends ActorResponse {
 
     /**
@@ -51,10 +50,6 @@ class ServletResponse (
             }
         }
     }
-
-    /** {@inheritDoc} */
-    override def recover ( action: => Unit ): Unit
-        = recovery.from(this) { () => action }
 
 }
 

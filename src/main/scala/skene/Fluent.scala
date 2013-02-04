@@ -13,12 +13,15 @@ abstract class Skene (
     /**
      * The dispatcher to collect into
      */
-    private val dispatcher = new Dispatcher( logger )
+    private val dispatcher = new Dispatcher
 
     /**
      * A helper class for fluently building a dispatcher
      */
     class Fluent ( private val matcher: Matcher ) {
+
+        def apply ( callback: (Recover, Request, Response) => Unit ): Unit
+            = dispatcher.add( matcher, Handler(callback) )
 
         def apply ( callback: (Request, Response) => Unit ): Unit
             = dispatcher.add( matcher, Handler(callback) )
@@ -46,8 +49,10 @@ abstract class Skene (
     }
 
     /** {@inheritDoc} */
-    override def handle( request: Request, response: Response ): Unit
-        = dispatcher.handle( request, response )
+    override def handle(
+        recover: Recover, request: Request, response: Response
+    ): Unit
+        = dispatcher.handle( recover, request, response )
 
     /**
      * Adds a handler for any request matching the given path
@@ -115,8 +120,9 @@ abstract class Skene (
     /**
      * Sets up the handler for when exceptions are thrown
      */
-    def error ( handler: (Throwable, Request, Response) => Unit ): Unit
-        = dispatcher.error( handler )
+    def error (
+        handler: (Request, Response) => PartialFunction[Throwable, Unit]
+    ): Unit = dispatcher.error( handler )
 
     /**
      * Sets up a handler for the root directory

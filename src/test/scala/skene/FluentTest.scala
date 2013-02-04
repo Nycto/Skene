@@ -16,14 +16,16 @@ class SkeneTest extends Specification with Mockito {
 
         def this ( url: String ) = this( BareRequest( url = URL(url) ) )
 
+        val recover = Recover.using { case err: Throwable => throw err }
+
         val response = mock[Response]
         val pass = mock[Handler]
         val fail = mock[Handler]
 
         def matches ( interface: Handler ) = {
-            interface.handle( request, response )
-            there was no(fail).handle( request, response )
-            there was one(pass).handle( request, response )
+            interface.handle( recover, request, response )
+            there was no(fail).handle( recover, request, response )
+            there was one(pass).handle( recover, request, response )
         }
     }
 

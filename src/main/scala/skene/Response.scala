@@ -175,12 +175,6 @@ trait Response {
     def done (): Response
 
     /**
-     * Catches any exceptions thrown within the given thunk and gracefully
-     * shuts down the response
-     */
-    def recover ( action: => Unit ): Unit
-
-    /**
      * Sets a header in this response
      */
     def header( field: Response.HeaderField, value: String ): Response

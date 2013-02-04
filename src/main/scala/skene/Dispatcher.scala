@@ -8,10 +8,9 @@ import scala.concurrent.ExecutionContext
  *
  * This class is thread safe
  */
-class Dispatcher
-    ( override protected val logger: Logger = Logger.logger )
-    ( implicit context: ExecutionContext )
-extends Handler {
+class Dispatcher (
+    implicit context: ExecutionContext
+) extends Handler {
 
     /**
      * A pairing of a matcher and it's handler
@@ -31,7 +30,9 @@ extends Handler {
     /**
      * The handler to use when an exception is thrown
      */
-    private var error: Option[(Throwable, Request, Response) => Unit] = None
+    private var error:
+        Option[(Request, Response) => PartialFunction[Throwable, Unit]]
+        = None
 
     /**
      * The handler to use when nothing matches and there is no default
@@ -73,7 +74,7 @@ extends Handler {
      * Changes the error handler for this dispatcher
      */
     def error (
-        handler: (Throwable, Request, Response) => Unit
+        handler: (Request, Response) => PartialFunction[Throwable, Unit]
     ): Dispatcher = {
         error.synchronized {
             error = Some(handler)
@@ -85,7 +86,9 @@ extends Handler {
      * Checks the list of possible handlers and executes
      * the one that matches
      */
-    override def handle ( request: Request, response: Response ): Unit = {
+    override def handle (
+        recover: Recover, request: Request, response: Response
+    ): Unit = {
 
         val matched = entries.find( entry => {
             entry.matcher.matches(request) match {
@@ -96,22 +99,24 @@ extends Handler {
             }
         })
 
-        try {
-            matched match {
-                case None =>
-                    default.getOrElse(unresolvable).handle(request, response)
-
-                case Some( (params, handler) ) =>
-                    handler.handle( request.withParams(params), response )
-            }
+        // If a specific error handler has been defined, use it. Otherwise,
+        // use the default error recovery object
+        val customRecover = error match {
+            case None => recover
+            case Some(onError) =>
+                Recover.using( onError( request, response ) )
+                    .orFallBackTo( recover )
         }
-        catch {
-            case err: Throwable => error match {
-                case Some(_) => {
-                    logger.error( err )
-                    error.get( err, request, response )
-                }
-                case None => { throw err }
+
+        customRecover.from {
+            matched match {
+                case None => default.getOrElse(unresolvable).handle(
+                    customRecover, request, response
+                )
+
+                case Some( (params, handler) ) => handler.handle(
+                    customRecover, request.withParams(params), response
+                )
             }
         }
 

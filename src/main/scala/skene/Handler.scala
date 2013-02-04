@@ -17,11 +17,26 @@ object Handler {
      * Creates a handler from a callback
      */
     def apply
+        ( callback: (Recover, Request, Response) => Unit )
+        ( implicit context: ExecutionContext )
+    : Handler = new Handler {
+        def handle(
+            recover: Recover, request: Request, response: Response
+        ): Unit
+            = recover.from { callback( recover, request, response ) }
+    }
+
+    /**
+     * Creates a handler from a callback
+     */
+    def apply
         ( callback: (Request, Response) => Unit )
         ( implicit context: ExecutionContext )
     : Handler = new Handler {
-        def handle( request: Request, response: Response ): Unit
-            = callback( request, response )
+        def handle(
+            recover: Recover, request: Request, response: Response
+        ): Unit
+            = recover.from { callback( request, response ) }
     }
 
     /**
@@ -31,8 +46,10 @@ object Handler {
         ( callback: (Response) => Unit )
         ( implicit context: ExecutionContext )
     : Handler = new Handler {
-        def handle( request: Request, response: Response ): Unit
-            = callback( response )
+        def handle(
+            recover: Recover, request: Request, response: Response
+        ): Unit
+            = recover.from { callback( response ) }
     }
 
 }
@@ -52,7 +69,7 @@ abstract class Handler (
     /**
      * Handles the given request and returns the response data
      */
-    def handle( request: Request, response: Response ): Unit
+    def handle( recover: Recover, request: Request, response: Response ): Unit
 
     /**
      * The primary handler for using a handler has a servlet
@@ -64,18 +81,15 @@ abstract class Handler (
         val async = request.startAsync();
 
         val wrappedReq = new ServletRequest( request )
-        val wrappedResp = new ServletResponse(
-            async, response, new Recover( logger )
-        ).isHtml
+        val wrappedResp = new ServletResponse( async, response ).isHtml
+
+        val recover = Recover.errorAndLog( wrappedResp, logger )
 
         logger.request( wrappedReq )
 
-        context.execute( new Runnable {
-            override def run = wrappedResp.recover {
-                // Pass the request off to the handler, but watch for errors
-                handle( wrappedReq, wrappedResp )
-            }
-        } )
+        recover.async {
+            handle( recover, wrappedReq, wrappedResp )
+        }
     }
 
     /** {@inheritDoc} */

@@ -16,26 +16,17 @@ class PrereqHandler[T] private[skene] (
     /** {@inheritDoc} */
     override def toString = "PrereqHandler(%s)".format( graph )
 
-    /** Handles any errors thrown by the prereqs */
-    private def onError ( resp: Response, err: Throwable ): Unit = {
-        resp.serverError.html(
-            <html>
-                <head><title>Internal Server Error</title></head>
-                <body><h1>Internal Server Error</h1></body>
-            </html>
-        ).done
-    }
-
     /** {@inheritDoc} */
-    override def handle( req: Request, resp: Response ): Unit = {
+    override def handle(
+        recover: Recover, req: Request, resp: Response
+    ): Unit = {
         val future: Future[T] = graph.build( req, resp )
-        future.onFailure { case err: Throwable => onError(resp, err) }
+
+        recover.fromFuture( future )
 
         future.onSuccess {
-            case bundle => try {
-                action( bundle, resp );
-            } catch {
-                case err: Throwable => onError(resp, err)
+            case bundle => recover.from {
+                action( bundle, resp )
             }
         }
     }
