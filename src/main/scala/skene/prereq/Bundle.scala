@@ -20,15 +20,17 @@ class Bundle private[skene] (
         "Bundle(" + bundled.mkString(", ") + ")"
     }
 
-    /**
-     * Returns one of the specific data types from this bundle
-     */
+    /** Returns one of the specific data types from this bundle */
     def get[T: Manifest]: T
         = joined( manifest[T].runtimeClass ).asInstanceOf[T]
 
-    /**
-     * Adds a new class to this bundle
-     */
+    /** Pulls the skene request object from this bundle */
+    def request = get[Prereq].request
+
+    /** Pulls the skene response object from this bundle */
+    def response = get[Prereq].response
+
+    /** Adds a new class to this bundle */
     private[skene] def add[T] ( clazz: Class[_], value: T ): Bundle = {
         if ( !clazz.isInstance(value) )
             throw new Exception("Bundle add mismatch")
@@ -36,9 +38,7 @@ class Bundle private[skene] (
         new Bundle( joined + ((clazz, value)) )
     }
 
-    /**
-     * Adds a new class to this bundle
-     */
+    /** Adds a new class to this bundle */
     private[skene] def add[T: Manifest] ( value: T ): Bundle
         = add( manifest[T].runtimeClass, value )
 
@@ -60,9 +60,7 @@ class Bundle private[skene] (
         }
     }
 
-    /**
-     * Returns this bundle as an instance of the given class
-     */
+    /** Returns this bundle as an instance of the given class */
     private[skene] def asProxyOf[U]( clazzes: Seq[Class[_]] ): U = {
         val missing = clazzes.toSet.diff( joined.keySet )
 
