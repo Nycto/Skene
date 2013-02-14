@@ -77,6 +77,12 @@ class Graph[T] private[skene] (
     def in ( action: (T, Response) => Unit ): Handler
         = new PrereqHandler[T]( this, action )
 
+    /**
+     * Builds a Request Handler that will be given a fully formed bundle
+     */
+    def in ( action: (T, Response, Recover) => Unit ): Handler
+        = new PrereqHandler[T]( this, action )
+
 }
 
 

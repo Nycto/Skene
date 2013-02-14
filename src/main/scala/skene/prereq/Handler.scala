@@ -8,10 +8,16 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 class PrereqHandler[T] private[skene] (
     private val graph: Graph[T],
-    private val action: (T, Response) => Unit
+    private val action: (T, Response, Recover) => Unit
 ) (
     implicit context: ExecutionContext
 ) extends Handler {
+
+    /** Alternate constructor */
+    private[skene] def this
+        ( graph: Graph[T], action: (T, Response) => Unit )
+        ( implicit context: ExecutionContext )
+        = this( graph, (prereqs, response, _) => action(prereqs, response) )
 
     /** {@inheritDoc} */
     override def toString = "PrereqHandler(%s)".format( graph )
@@ -26,7 +32,7 @@ class PrereqHandler[T] private[skene] (
 
         future.onSuccess {
             case bundle => recover.from {
-                action( bundle, resp )
+                action( bundle, resp, recover )
             }
         }
     }
