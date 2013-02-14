@@ -3,18 +3,18 @@ package test.scala.com.skene
 import org.specs2.mutable._
 import org.specs2.mock._
 
-import java.io.Writer
-import java.lang.StringBuilder
-import java.lang.StringBuffer
+import java.io.{ByteArrayOutputStream, StringReader, ByteArrayInputStream}
+import scala.io.Codec
 
 import com.roundeights.skene._
 
 class RenderableTest extends Specification with Mockito {
 
     private def assertRenders ( renderable: Renderable ) = {
-        val writer = mock[Writer]
-        renderable.render(writer)
-        there was one(writer).write("<p>Data</p>")
+        val stream = new ByteArrayOutputStream
+        renderable.render(stream, Codec.UTF8)
+        val result: String = stream.toString("UTF8")
+        result.getBytes("UTF8") must_== "<p>Data</p>".getBytes("UTF8")
     }
 
     "Renderable objects" should {
@@ -32,15 +32,21 @@ class RenderableTest extends Specification with Mockito {
         }
 
         "render from a Callback" in {
-            assertRenders( Renderable(() => { "<p>Data</p>" }) )
-        }
-
-        "render from a Callback that uses a Writer" in {
-            assertRenders( Renderable( _.write("<p>Data</p>") ) )
+            assertRenders( Renderable(() => "<p>Data</p>" ) )
         }
 
         "render from an XML block" in {
             assertRenders( Renderable(<p>Data</p>) )
+        }
+
+        "render from a Reader" in {
+            assertRenders( Renderable(new StringReader("<p>Data</p>")) )
+        }
+
+        "render from an InputStream" in {
+            assertRenders( Renderable(new ByteArrayInputStream(
+                "<p>Data</p>".getBytes("UTF8")
+            )) )
         }
 
     }

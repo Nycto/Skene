@@ -1,5 +1,7 @@
 package com.roundeights.skene.response
 
+import scala.io.Codec
+
 import scala.actors.Actor
 import scala.collection.mutable.MutableList
 
@@ -22,12 +24,12 @@ class ServletResponse (
     protected val actor: Actor = Actor.actor {
 
         val data = MutableList[Renderable]()
-        val writer = response.getWriter
+        val stream = response.getOutputStream
 
         def flush (): Unit = {
-            data.map( _.render( writer ) )
+            data.map( _.render( stream, Codec.UTF8 ) )
             data.clear()
-            writer.flush()
+            stream.flush()
         }
 
         Actor.loop {
@@ -43,7 +45,7 @@ class ServletResponse (
 
                 case _: Response.Done => {
                     flush()
-                    writer.close()
+                    stream.close()
                     async.complete()
                     Actor.exit()
                 }

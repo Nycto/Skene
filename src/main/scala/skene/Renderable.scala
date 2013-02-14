@@ -1,21 +1,21 @@
 package com.roundeights.skene
 
-import java.io.Writer
-import java.lang.StringBuilder
-import java.lang.StringBuffer
+import org.apache.commons.io.IOUtils
 
+import java.io.{InputStream, OutputStream, Reader, Writer}
 import scala.xml.NodeSeq
+
+import scala.io.Codec
+import java.nio.CharBuffer
 
 import scala.language.implicitConversions
 
 /**
- * A piece of data that can be rendered down to a string
+ * A piece of data that can be rendered down to an output stream
  */
 trait Renderable {
-    /**
-     * Renders this object back to the given Writer
-     */
-    def render ( output: Writer ): Unit
+    /** Renders this object back to the given Writer */
+    def render ( output: OutputStream, codec: Codec ): Unit
 }
 
 /**
@@ -23,51 +23,94 @@ trait Renderable {
  */
 object Renderable {
 
-    /**
-     * A class for converting a callback to a renderable
-     */
-    class CallbackRenderer (
-        private val callback: (Writer) => Unit
-    ) extends Renderable {
-
-        /**
-         * Constructor...
-         */
-        def this ( thunk: () => String )
-            = this( _.write( thunk() ) )
-
-        /**
-         * @see Renderable
-         */
-        override def render ( output: Writer ) = callback( output )
+    /** Encodes a string to a byte array using the given code */
+    def write ( content: String, to: OutputStream, using: Codec ): Unit = {
+        val encoded = using.encoder.encode( CharBuffer.wrap(content) )
+        // -1 to compensate for the null byte
+        to.write( encoded.array, encoded.arrayOffset, encoded.capacity - 1 )
     }
 
     /**
-     * A class to convert a string to a renderable
+     * Uses a String as a renderable
      */
     class StringRenderer ( private val content: String ) extends Renderable {
-        /**
-         * @see Renderable
-         */
-        override def render ( output: Writer) = output.write( content )
+        /** {@inheritDoc} */
+        override def render ( output: OutputStream, codec: Codec )
+            = write( content, output, codec )
+    }
+
+    /**
+     * Uses a callback as a Renderable
+     */
+    class CallbackRenderer (
+        private val callback: (OutputStream, Codec) => Unit
+    ) extends Renderable {
+
+        /** Constructor...  */
+        def this ( callback: () => String )
+            = this( (stream, codec) => write( callback(), stream, codec ) )
+
+        /** {@inheritDoc} */
+        override def render ( output: OutputStream, codec: Codec )
+            = callback( output, codec )
+    }
+
+    /**
+     * Converts any object with a toString method to a Renderable
+     */
+    class AnyRenderer ( private val obj: Any ) extends Renderable {
+        /** {@inheritDoc} */
+        override def render ( output: OutputStream, codec: Codec ): Unit
+            = write( obj.toString, output, codec )
+    }
+
+    /**
+     * Uses a Reader as an renderable
+     */
+    class ReaderRenderer ( private val content: Reader ) extends Renderable {
+        /** {@inheritDoc} */
+        override def render ( output: OutputStream, codec: Codec ) = {
+            IOUtils.copy( content, output, codec.name )
+            content.close()
+        }
+    }
+
+    /**
+     * Uses an InputStream as a renderable
+     */
+    class StreamRenderer (
+        private val content: InputStream
+    ) extends Renderable {
+        /** {@inheritDoc} */
+        override def render ( output: OutputStream, codec: Codec ) = {
+            IOUtils.copy( content, output )
+            content.close()
+        }
     }
 
     implicit def apply ( content: String ): Renderable
         = new StringRenderer( content )
 
     implicit def apply ( content: StringBuilder ): Renderable
-        = new CallbackRenderer(() => content.toString )
+        = new AnyRenderer( content )
 
     implicit def apply ( content: StringBuffer ): Renderable
-        = new CallbackRenderer(() => content.toString )
+        = new AnyRenderer( content )
 
-    implicit def apply ( thunk: () => String ): Renderable
-        = new CallbackRenderer( thunk )
+    implicit def apply ( callback: () => String ): Renderable
+        = new CallbackRenderer( callback )
 
-    implicit def apply ( callback: (Writer) => Unit ): Renderable
+    implicit def apply ( callback: (OutputStream, Codec) => Unit ): Renderable
         = new CallbackRenderer( callback )
 
     implicit def apply ( content: NodeSeq ): Renderable
-        = new CallbackRenderer(() => content.toString )
+        = apply( () => content.toString )
+
+    implicit def apply ( content: Reader ): Renderable
+        = new ReaderRenderer( content )
+
+    implicit def apply ( content: InputStream ): Renderable
+        = new StreamRenderer( content )
+
 }
 
