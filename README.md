@@ -1,11 +1,9 @@
-Skene
+Skene [![Build Status](https://secure.travis-ci.org/Nycto/Skene.png?branch=master)](http://travis-ci.org/Nycto/Skene)
 =====
 
 Skene is a Sinatra-esque HTTP request dispatching DSL. The goal is to make
 it easy to build routing rules, read request data, and then return a response
 in an immutable way.
-
-[![Build Status](https://secure.travis-ci.org/Nycto/Skene.png?branch=master)](http://travis-ci.org/Nycto/Skene)
 
 
 Basic Example
