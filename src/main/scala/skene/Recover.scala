@@ -32,11 +32,14 @@ object Recover {
 class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
 
     /** Executes the recovery code when a future fails */
-    def fromFuture
-        ( future: Future[_] )
+    def fromFuture[A]
+        ( future: Future[A] )
         ( implicit context: ExecutionContext )
-    : Unit = future.onFailure {
-        case err: Throwable if action.isDefinedAt(err) => action(err)
+    : Future[A] = {
+        future.onFailure {
+            case err: Throwable if action.isDefinedAt(err) => action(err)
+        }
+        future
     }
 
     /**
