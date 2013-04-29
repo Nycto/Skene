@@ -231,29 +231,34 @@ trait Response {
         = content( renderable ).isXML
 
     /**
-     * Builds a new response with a 200 OK
+     * Sends a 200 OK
      */
     def ok = code( Response.Code.OK() )
 
     /**
-     * Builds a new response with a 400 Bad Requestcode
+     * Sends a 400 Bad Requestcode
      */
     def badRequest = code( Response.Code.BadRequest() )
 
     /**
-     * Builds a new response with a 401 unauthorized code
+     * Sends a 401 unauthorized code
      */
     def unauthorized = code( Response.Code.Unauthorized() )
 
     /**
-     * Builds a new response with a 404 Not Found code
+     * Sends a 404 Not Found code
      */
     def notFound = code( Response.Code.NotFound() )
 
     /**
-     * Builds a new response with a 500 internal server error code
+     * Sends a 500 internal server error code
      */
     def serverError = code( Response.Code.InternalServerError() )
+
+    /**
+     * Sends a 409 Conflict response code
+     */
+    def conflict = code( Response.Code.Conflict() )
 
     /**
      * Redirects the client using a 302 Found response code
