@@ -9,12 +9,16 @@ import java.util.concurrent.atomic.AtomicReference
  */
 abstract class Skene (
     implicit context: ExecutionContext
-) extends Handler {
+) extends Handler with Matcher {
 
     /**
      * The dispatcher to collect into
      */
     private val dispatcher = new AtomicReference( new Dispatcher )
+
+    /** {@inheritDoc} */
+    override def matches ( request: Request ): Matcher.Result
+        = dispatcher.get.matches( request )
 
     /**
      * Adds a new matcher
@@ -151,6 +155,11 @@ abstract class Skene (
      */
     def when ( callback: => Boolean ): Fluent
         = new Fluent( Matcher.call { Matcher.Result( callback ) } )
+
+    /**
+     * Delegates to another object if it matches
+     */
+    def delegate ( to: Handler with Matcher ): Unit = when( to )( to )
 
 }
 

@@ -190,5 +190,32 @@ class DispatcherTest extends Specification with Mockito {
 
     }
 
+    "A Dispatcher used as a Matcher" should {
+
+        "Not match when it is empty" in {
+            new Dispatcher().matches( request ) must_== Matcher.Result(false)
+        }
+
+        "Match when at least one of its handlers matches" in {
+            new Dispatcher()
+                .add( Matcher.never, mock[Handler] )
+                .add( Matcher.always, mock[Handler] )
+                .add( Matcher.never, mock[Handler] )
+                .matches( request ) must_== Matcher.Result(true)
+        }
+
+        "Match when a default handler exists" in {
+            new Dispatcher().default( mock[Handler] )
+                .matches( request ) must_== Matcher.Result(true)
+        }
+
+        "Not match when none of its handlers matches" in {
+            new Dispatcher()
+                .add( Matcher.never, mock[Handler] )
+                .add( Matcher.never, mock[Handler] )
+                .matches( request ) must_== Matcher.Result(false)
+        }
+    }
+
 }
 

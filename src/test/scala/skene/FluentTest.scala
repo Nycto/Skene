@@ -221,5 +221,18 @@ class FluentTest extends Specification with Mockito {
         }
     }
 
+    "The 'delegate' method" should {
+
+        "Hand the request to a nested interface" in {
+            val test = new AssertURL( BareRequest() )
+            test.matches( new Skene {
+                delegate( new Skene {
+                    when( true ) { test.pass }
+                })
+                default { test.fail }
+            } )
+        }
+    }
+
 }
 

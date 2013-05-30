@@ -47,12 +47,32 @@ class Dispatcher (
     private val onError: Option[Dispatcher.OnError] = None
 )(
     implicit context: ExecutionContext
-) extends Handler {
+) extends Handler with Matcher {
 
     /**
      * The list of matchers, ordered for faster parsing
      */
     private lazy val reversed = entries.reverse
+
+    /** {@inheritDoc} */
+    override def matches ( request: Request ): Matcher.Result = {
+        @tailrec def findMatch (
+            remaining: List[(Matcher, Handler)]
+        ): Matcher.Result = remaining match {
+            case Nil => Matcher.Result(false)
+            case head :: tail => {
+                head._1.matches(request) match {
+                    case matched@Matcher.Result(true, _) => matched
+                    case Matcher.Result(false, _) => findMatch(tail)
+                }
+            }
+        }
+
+        if ( default.isDefined )
+            Matcher.Result(true)
+        else
+            findMatch( reversed )
+    }
 
     /**
      * Adds a matcher/handler pair to this Dispatcher
