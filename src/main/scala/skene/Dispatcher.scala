@@ -1,6 +1,5 @@
 package com.roundeights.skene
 
-import com.roundeights.skene.util.LinkedList
 import scala.concurrent.ExecutionContext
 import scala.annotation.tailrec
 
