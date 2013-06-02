@@ -86,6 +86,11 @@ trait Request {
     def method: Request.Method
 
     /**
+     * The query string from the URL
+     */
+    def queryString: Option[String]
+
+    /**
      * Returns a Source iterator over the body of this request.
      */
     def body: Source = Source.fromInputStream( bodyStream )
@@ -152,10 +157,12 @@ object BareRequest {
         params: Map[String, String] = Map(),
         method: Request.Method = Request.Method.GET(),
         body: String = "",
-        headers: Map[String, String] = Map()
+        headers: Map[String, String] = Map(),
+        queryString: Option[String] = None
     ) = new BareRequest(
         url, params, method,
-        new ByteArrayInputStream( body.getBytes ), headers
+        new ByteArrayInputStream( body.getBytes ),
+        headers, queryString
     )
 }
 
@@ -167,7 +174,8 @@ class BareRequest (
     override val params: Map[String, String],
     override val method: Request.Method,
     override val bodyStream: InputStream,
-    override val headers: Map[String, String]
+    override val headers: Map[String, String],
+    override val queryString: Option[String]
 ) extends Request
 
 /**
@@ -191,6 +199,9 @@ abstract class RequestDecorator
 
     /** {@inheritDoc} */
     override def headers = inner.headers
+
+    /** {@inheritDoc} */
+    override def queryString = inner.queryString
 }
 
 /**

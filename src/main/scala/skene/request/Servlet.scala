@@ -28,6 +28,13 @@ class ServletRequest (
     override def bodyStream = request.getInputStream
 
     /** {@inheritDoct} */
+    override def queryString = request.getQueryString match {
+        case null => None
+        case "" => None
+        case queryStr => Some(queryStr)
+    }
+
+    /** {@inheritDoct} */
     override lazy val headers: Map[String, String] = {
         request.getHeaderNames.foldLeft( Map[String, String]() ) {
             (map, key) => map + (key -> request.getHeader(key))
