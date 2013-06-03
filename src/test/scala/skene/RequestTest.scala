@@ -57,6 +57,28 @@ class RequestTest extends Specification {
 
     }
 
+    "The Request QueryString methods" should {
+
+        "Generate parameters from the query string" in {
+            BareRequest().queryParams must_== QueryString()
+
+            BareRequest( queryString = Some("") ).queryParams must_==
+                QueryString()
+
+            BareRequest( queryString = Some("a=b&c=d") ).queryParams must_==
+                QueryString("a" -> "b", "c" -> "d")
+        }
+
+        "Generate parameters from body" in {
+            BareRequest().bodyParams must_== QueryString()
+
+            BareRequest( body = "" ).bodyParams must_== QueryString()
+
+            BareRequest( body = "a=b&c=d" ).bodyParams must_==
+                QueryString("a" -> "b", "c" -> "d")
+        }
+    }
+
     "The Request.Method enum" should {
 
         "be buildable from a string" in {

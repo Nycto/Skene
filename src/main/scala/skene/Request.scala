@@ -142,8 +142,16 @@ trait Request {
         = withParams( newParams.toMap )
 
     /**
-     * {@inheritDoc}
+     * Returns a list of GET query parameters
      */
+    lazy val queryParams = QueryString( queryString.getOrElse("") )
+
+    /**
+     * Returns a list of POST body parameters
+     */
+    lazy val bodyParams = QueryString( body.mkString )
+
+    /** {@inheritDoc} */
     override def toString: String = "[Request %s %s]".format( method, url )
 
 }
