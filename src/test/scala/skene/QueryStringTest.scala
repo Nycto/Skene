@@ -13,6 +13,12 @@ class QueryStringTest extends Specification {
                 QueryString( "a" -> "b", "c" -> "d" )
         }
 
+        "Provide access to values by key" in {
+            QueryString()("a") must_== None
+            QueryString( "a" -> "b", "c" -> "d" )("c") must_== Some("d")
+            QueryString( "a" -> "b", "a" -> "c" )("a") must_== Some("b")
+        }
+
         "Generate URL encoded strings" in {
             QueryString().toString must_== ""
             QueryString( "a" -> "b", "c" -> "d" ).toString must_== "a=b&c=d"

@@ -42,6 +42,10 @@ case class QueryString (
     /** {@inheritDoc} */
     override def length = toList.length
 
+    /** Returns the first parameter matching the given key */
+    def apply ( key: String ): Option[String]
+        = toList.find( _._1 == key ).map( _._2 )
+
     /** Adds a parameter */
     def :: ( param: (String, String) ) = QueryString(param :: toList)
 
