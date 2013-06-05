@@ -80,7 +80,7 @@ class RecoverTest extends Specification with Mockito {
             recover.from { throw new Exception }
 
             there was one(runnable).run
-       }
+        }
 
         "Ignore a fallback if not needed" in {
             val runnable = mock[Runnable]
@@ -98,7 +98,7 @@ class RecoverTest extends Specification with Mockito {
             recover.from { throw err }
 
             there was one(runnable).run
-       }
+        }
 
         "Respond to failed futures" in {
             val runnable = mock[Runnable]
@@ -113,6 +113,31 @@ class RecoverTest extends Specification with Mockito {
             val future = Future.failed(err)
 
             recover.fromFuture( future )
+
+            try {
+                await( future )
+            } catch {
+                case err: Throwable => ()
+            }
+
+            there was one(runnable).run
+       }
+
+        "Recover when a chained 'onSuccess' function throws" in {
+            val runnable = mock[Runnable]
+
+            val recover = Recover.using {
+                case thrown: Throwable => {
+                    thrown must_== err
+                    runnable.run
+                }
+            }
+
+            val future = Future.successful("Success")
+
+            recover.fromFuture( future ).onSuccess {
+                case "Success" => throw err
+            }
 
             try {
                 await( future )

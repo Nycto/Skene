@@ -31,17 +31,6 @@ object Recover {
  */
 class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
 
-    /** Executes the recovery code when a future fails */
-    def fromFuture[A]
-        ( future: Future[A] )
-        ( implicit context: ExecutionContext )
-    : Future[A] = {
-        future.onFailure {
-            case err: Throwable if action.isDefinedAt(err) => action(err)
-        }
-        future
-    }
-
     /**
      * Attempts to apply this exception or rethrows if the exception isn't
      * defined for this instance
@@ -58,6 +47,32 @@ class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
         thunk
     } catch {
         case err: Throwable => orRethrow( err )
+    }
+
+    /** Executes a partial function when a future is successful */
+    class OnSuccess[A]
+        ( val future: Future[A] )
+        ( implicit context: ExecutionContext )
+    {
+        /** Executes a partial function on success */
+        def onSuccess ( callback: PartialFunction[A, Unit] ): Unit = {
+            future.onSuccess {
+                case value if callback.isDefinedAt(value) => from {
+                    callback( value )
+                }
+            }
+        }
+    }
+
+    /** Executes the recovery code when a future fails */
+    def fromFuture[A]
+        ( future: Future[A] )
+        ( implicit context: ExecutionContext )
+    : OnSuccess[A] = {
+        future.onFailure {
+            case err: Throwable if action.isDefinedAt(err) => action(err)
+        }
+        new OnSuccess( future )
     }
 
     /** Executes the given thunk asyncrhonously and recovers from any errors */
