@@ -181,7 +181,13 @@ trait Response {
         = header( Response.Header( field, value ) )
 
     /**
-     * Creates a new copy of this response with the given content type
+     * Sends a location header
+     */
+    def location ( value: String ): Response
+        = header( Response.Header.Location(), value )
+
+    /**
+     * Sends the given content type
      */
     def contentType ( value: String ): Response
         = header( Response.Header.ContentType(), value )
@@ -236,6 +242,11 @@ trait Response {
     def ok = code( Response.Code.OK() )
 
     /**
+     * Sends a 201 OK
+     */
+    def created = code( Response.Code.Created() )
+
+    /**
      * Sends a 400 Bad Requestcode
      */
     def badRequest = code( Response.Code.BadRequest() )
@@ -264,13 +275,13 @@ trait Response {
      * Redirects the client using a 302 Found response code
      */
     def found ( url: String ): Response
-        = code( Response.Code.Found() ).header(Response.Header.Location(), url)
+        = code( Response.Code.Found() ).location(url)
 
     /**
      * Redirects the client using a 301 Moved response code
      */
     def moved ( url: String ): Response
-        = code( Response.Code.Moved() ).header(Response.Header.Location(), url)
+        = code( Response.Code.Moved() ).location(url)
 
 }
 
