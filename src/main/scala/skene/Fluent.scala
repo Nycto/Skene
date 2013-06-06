@@ -1,5 +1,6 @@
 package com.roundeights.skene
 
+import scala.annotation.tailrec
 import com.roundeights.skene._
 import scala.concurrent.ExecutionContext
 import java.util.concurrent.atomic.AtomicReference
@@ -16,6 +17,19 @@ abstract class Skene (
      */
     private val dispatcher = new AtomicReference( new Dispatcher )
 
+    /**
+     * Changes the value of the dispatcher in a thread safe manner
+     */
+    @tailrec private def setDispatcher (
+        callback: Dispatcher => Dispatcher
+    ): Unit = {
+        val current = dispatcher.get
+        val changed = callback( current )
+        if ( !dispatcher.compareAndSet(current, changed) )
+            setDispatcher( callback )
+    }
+
+
     /** {@inheritDoc} */
     override def matches ( request: Request ): Matcher.Result
         = dispatcher.get.matches( request )
@@ -24,7 +38,7 @@ abstract class Skene (
      * Adds a new matcher
      */
     def when ( matcher: Matcher )( handler: Handler ): Unit
-        = dispatcher.set( dispatcher.get.add( matcher, handler ) )
+        = setDispatcher( _.add( matcher, handler ) )
 
     /**
      * A helper class for fluently building a dispatcher
@@ -130,8 +144,7 @@ abstract class Skene (
     /**
      * Sets up a default handler
      */
-    def default ( handler: Handler ): Unit
-        = dispatcher.set( dispatcher.get.default( handler ) )
+    def default ( handler: Handler ): Unit = setDispatcher( _.default(handler) )
 
     /**
      * Sets up a default handler from a callback
@@ -144,7 +157,7 @@ abstract class Skene (
      */
     def error (
         handler: (Request, Response) => PartialFunction[Throwable, Unit]
-    ): Unit = dispatcher.set( dispatcher.get.error( handler ) )
+    ): Unit = setDispatcher( _.error( handler ) )
 
     /**
      * Sets up a handler for the root directory
