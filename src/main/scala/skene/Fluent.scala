@@ -93,9 +93,14 @@ abstract class Skene (
     lazy val isDelete: Fluent = method( Request.Method.DELETE() )
 
     /**
-     * Applies a handler for DELETE requests
+     * Applies a handler for PUT requests
      */
     lazy val isPut: Fluent = method( Request.Method.PUT() )
+
+    /**
+     * Applies a handler for PATCH requests
+     */
+    lazy val isPatch: Fluent = method( Request.Method.PATCH() )
 
     /**
      * Adds a handler for GET requests to the given path
@@ -116,6 +121,11 @@ abstract class Skene (
      * Adds a handler for PUT requests to the given path
      */
     def put ( path: String ): Fluent = isPut and request(path)
+
+    /**
+     * Adds a handler for PATCH requests to the given path
+     */
+    def patch ( path: String ): Fluent = isPatch and request(path)
 
     /**
      * Sets up a default handler
