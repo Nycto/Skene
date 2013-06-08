@@ -91,11 +91,6 @@ trait Request {
     def queryString: Option[String]
 
     /**
-     * Returns a Source iterator over the body of this request.
-     */
-    def body: Source = Source.fromInputStream( bodyStream )
-
-    /**
      * Returns an input stream of the body of this request.
      */
     def bodyStream: InputStream
@@ -104,6 +99,16 @@ trait Request {
      * A map of request headers
      */
     def headers: Map[String, String]
+
+    /**
+     * Returns a Source iterator over the body of this request.
+     */
+    def body: Source = Source.fromInputStream( bodyStream )
+
+    /**
+     * Returns the body of this request as a String
+     */
+    def bodyStr: String = body.mkString
 
     /**
      * Returns whether this request used the GET method
