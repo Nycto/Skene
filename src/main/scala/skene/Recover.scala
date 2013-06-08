@@ -1,6 +1,7 @@
 package com.roundeights.skene
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 /**
  * Recover companion
@@ -42,6 +43,15 @@ class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
             throw err
     }
 
+    /**
+     * Attempts to apply this exception and then rethrow it
+     */
+    def andRethrow ( err: Throwable ): Nothing = {
+        if ( action.isDefinedAt(err) )
+            action( err )
+        throw err
+    }
+
     /** Executes the given thunk and recovers if it throws an exception */
     def from ( thunk: => Unit ): Unit = try {
         thunk
@@ -55,12 +65,43 @@ class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
         ( implicit context: ExecutionContext )
     {
         /** Executes a partial function on success */
-        def onSuccess ( callback: PartialFunction[A, Unit] ): Unit = {
-            future.onSuccess {
-                case value if callback.isDefinedAt(value) => from {
-                    callback( value )
+        def onSuccess ( callback: PartialFunction[A, Unit] ): OnSuccess[A] = {
+            new OnSuccess(future.map {
+                case value if callback.isDefinedAt(value) => {
+                    try {
+                        callback(value)
+                        value
+                    } catch {
+                        case err: Throwable => andRethrow( err )
+                    }
                 }
-            }
+                case value => value
+            })
+        }
+
+        /** Applies a callback if the future was successful */
+        def map[O] ( callback: A => O ): OnSuccess[O]
+            = fromFuture( future.map( callback ) )
+
+        /** Applies a callback if the future was successful */
+        def flatMap[O] ( callback: A => Future[O] ): OnSuccess[O]
+            = fromFuture( future.flatMap( callback ) )
+
+        /** Applies a callback if the future was successful */
+        def foreach[O] ( callback: A => O ): Unit
+            = future.foreach(value => from { callback(value) })
+
+        /** Filters this future according to a predicate */
+        def withFilter ( predicate: A => Boolean ): OnSuccess[A] = {
+            new OnSuccess( future.flatMap(value => {
+                try {
+                    val pass = predicate( value )
+                    future.filter( _ => pass )
+                }
+                catch {
+                    case err: Throwable => andRethrow( err )
+                }
+            } ))
         }
     }
 

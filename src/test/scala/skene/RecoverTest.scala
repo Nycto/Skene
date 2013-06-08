@@ -21,17 +21,34 @@ class RecoverTest extends Specification with Mockito {
 
     val err = new ClassNotFoundException("Should be caught by exception")
 
+    // Returns a mock recover instance that expects 'err' and calls a runnable
+    def mockRecover = {
+        val runnable = mock[Runnable]
+
+        val recover = Recover.using {
+            case thrown: Throwable => {
+                thrown must_== err
+                runnable.run
+            }
+        }
+
+        (runnable, recover)
+    }
+
+    // Asserts that a future should fail with the 'err' exception
+    def expectErr[O] ( onSuccess: Recover#OnSuccess[O] ): Unit = {
+        try {
+            await( onSuccess.future )
+            throw new Exception("An expected exception was not thrown")
+        } catch {
+            case thrown: Throwable if thrown == err => ()
+        }
+    }
+
     "A Recover instance" should {
 
         "Absorb an exception if it can" in {
-            val runnable = mock[Runnable]
-
-            val recover = Recover.using {
-                case thrown: Throwable => {
-                    thrown must_== err
-                    runnable.run
-                }
-            }
+            val (runnable, recover) = mockRecover
 
             recover.from { throw err }
             recover.orRethrow( err )
@@ -101,52 +118,121 @@ class RecoverTest extends Specification with Mockito {
         }
 
         "Respond to failed futures" in {
-            val runnable = mock[Runnable]
+            val (runnable, recover) = mockRecover
 
-            val recover = Recover.using {
-                case thrown: Throwable => {
-                    thrown must_== err
-                    runnable.run
-                }
-            }
-
-            val future = Future.failed(err)
-
-            recover.fromFuture( future )
-
-            try {
-                await( future )
-            } catch {
-                case err: Throwable => ()
+            expectErr {
+                recover.fromFuture( Future.failed(err) )
             }
 
             there was one(runnable).run
-       }
+        }
 
         "Recover when a chained 'onSuccess' function throws" in {
-            val runnable = mock[Runnable]
+            val (runnable, recover) = mockRecover
 
-            val recover = Recover.using {
-                case thrown: Throwable => {
-                    thrown must_== err
-                    runnable.run
+            expectErr {
+                recover.fromFuture(
+                    Future.successful("Success")
+                ).onSuccess {
+                    case "Success" => throw err
                 }
             }
 
-            val future = Future.successful("Success")
+            there was one(runnable).run
+        }
 
-            recover.fromFuture( future ).onSuccess {
-                case "Success" => throw err
-            }
+        "Recover when a chained 'map' throws" in {
+            val (runnable, recover) = mockRecover
 
-            try {
-                await( future )
-            } catch {
-                case err: Throwable => ()
+            expectErr {
+                recover.fromFuture(
+                    Future.successful("Success")
+                ).map(value => {
+                    value must_== "Success"
+                    throw err
+                })
             }
 
             there was one(runnable).run
-       }
+        }
+
+        "Recover when a chained 'flatMap' throws" in {
+            val (runnable, recover) = mockRecover
+
+            expectErr {
+                recover.fromFuture(
+                    Future.successful("Success")
+                ).flatMap(value => {
+                    value must_== "Success"
+                    throw err
+                })
+            }
+
+            there was one(runnable).run
+        }
+
+        "Recover when a chained 'flatMap' returns a failed Future" in {
+            val (runnable, recover) = mockRecover
+
+            expectErr {
+                recover.fromFuture(
+                    Future.successful("Success")
+                ).flatMap(value => {
+                    value must_== "Success"
+                    Future.failed( err )
+                })
+            }
+
+            there was one(runnable).run
+        }
+
+        "recover when a chained 'foreach' throws" in {
+            val (runnable, recover) = mockRecover
+
+            val onSuccess = recover.fromFuture(
+                Future.successful("success")
+            )
+
+            onSuccess.foreach(value => {
+                value must_== "success"
+                throw err
+            })
+
+            await( onSuccess.future )
+
+            there was one(runnable).run
+        }
+
+        "recover when a chained 'withFilter' throws" in {
+            val (runnable, recover) = mockRecover
+
+            expectErr {
+                recover.fromFuture(
+                    Future.successful("Success")
+                ).withFilter(value => {
+                    value must_== "Success"
+                    throw err
+                })
+            }
+
+            there was one(runnable).run
+        }
+
+        "Not recover when a chained 'withFilter' returns false" in {
+            val runnable = mock[Runnable]
+            val recover = Recover.using { case _: Throwable => runnable.run }
+
+            await(
+                recover.fromFuture(
+                    Future.successful("Success")
+                ).withFilter(value => {
+                    value must_== "Success"
+                    false
+                }).future.failed
+            )
+
+            there was no(runnable).run
+        }
 
     }
 
