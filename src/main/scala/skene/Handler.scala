@@ -74,7 +74,7 @@ abstract class Handler (
     /**
      * The primary handler for using a handler has a servlet
      */
-    private def doRequest (
+    override protected def service (
         request: HttpServletRequest, response: HttpServletResponse
     ): Unit = {
 
@@ -91,26 +91,6 @@ abstract class Handler (
             handle( recover, wrappedReq, wrappedResp )
         }
     }
-
-    /** {@inheritDoc} */
-    override def doGet (
-        request: HttpServletRequest, response: HttpServletResponse
-    ): Unit = doRequest( request, response )
-
-    /** {@inheritDoc} */
-    override def doPost (
-        request: HttpServletRequest, response: HttpServletResponse
-    ): Unit = doRequest( request, response )
-
-    /** {@inheritDoc} */
-    override def doPut (
-        request: HttpServletRequest, response: HttpServletResponse
-    ): Unit = doRequest( request, response )
-
-    /** {@inheritDoc} */
-    override def doDelete (
-        request: HttpServletRequest, response: HttpServletResponse
-    ): Unit = doRequest( request, response )
 
 }
 
