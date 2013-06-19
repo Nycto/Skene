@@ -1,8 +1,6 @@
 package com.roundeights.skene
 
-import org.apache.commons.io.IOUtils
-
-import java.io.{InputStream, OutputStream, Reader, Writer}
+import java.io.{InputStream, OutputStream, Reader, Writer, OutputStreamWriter}
 import scala.xml.NodeSeq
 
 import scala.io.Codec
@@ -68,10 +66,23 @@ object Renderable {
      * Uses a Reader as an renderable
      */
     class ReaderRenderer ( private val content: Reader ) extends Renderable {
+
         /** {@inheritDoc} */
         override def render ( output: OutputStream, codec: Codec ) = {
-            IOUtils.copy( content, output, codec.name )
-            content.close()
+            val buffer = new Array[Char](1024 * 4)
+            val writer = new OutputStreamWriter(output, codec.charSet)
+
+            def copy: Unit = {
+                val read = content.read( buffer )
+                if ( read >= 0 ) {
+                    writer.write( buffer, 0, read )
+                    copy
+                }
+            }
+
+            copy
+            content.close
+            writer.flush
         }
     }
 
@@ -81,10 +92,22 @@ object Renderable {
     class StreamRenderer (
         private val content: InputStream
     ) extends Renderable {
+
         /** {@inheritDoc} */
         override def render ( output: OutputStream, codec: Codec ) = {
-            IOUtils.copy( content, output )
-            content.close()
+            val buffer = new Array[Byte](1024 * 4)
+
+            def copy: Unit = {
+                val read = content.read( buffer )
+                if ( read >= 0 ) {
+                    output.write( buffer, 0, read )
+                    copy
+                }
+            }
+
+            copy
+            content.close
+            output.flush
         }
     }
 
