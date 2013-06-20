@@ -101,6 +101,11 @@ trait Request {
     def headers: Map[String, String]
 
     /**
+     * A container of cookies in this request
+     */
+    def cookies: CookieJar
+
+    /**
      * Returns a Source iterator over the body of this request.
      */
     def body: Source = Source.fromInputStream( bodyStream )
@@ -171,11 +176,12 @@ object BareRequest {
         method: Request.Method = Request.Method.GET(),
         body: String = "",
         headers: Map[String, String] = Map(),
-        queryString: Option[String] = None
+        queryString: Option[String] = None,
+        cookies: CookieJar = new CookieJar
     ) = new BareRequest(
         url, params, method,
         new ByteArrayInputStream( body.getBytes ),
-        headers, queryString
+        headers, queryString, cookies
     )
 }
 
@@ -188,7 +194,8 @@ class BareRequest (
     override val method: Request.Method,
     override val bodyStream: InputStream,
     override val headers: Map[String, String],
-    override val queryString: Option[String]
+    override val queryString: Option[String],
+    override val cookies: CookieJar
 ) extends Request
 
 /**
@@ -215,6 +222,9 @@ abstract class RequestDecorator
 
     /** {@inheritDoc} */
     override def queryString = inner.queryString
+
+    /** {@inheritDoc} */
+    override def cookies = inner.cookies
 }
 
 /**

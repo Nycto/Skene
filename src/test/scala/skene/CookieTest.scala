@@ -61,6 +61,28 @@ class CookieTest extends Specification {
         }
     }
 
+    "A CookieJar" should {
+
+        val jar = CookieJar(
+            Cookie("key", "val1"),
+            Cookie("key2", "val2"),
+            Cookie("key", "val3")
+        )
+
+        "Return a list of named cookies" in {
+            jar("Not a Key") must_== Seq()
+            jar("key2") must_== Seq( Cookie("key2", "val2") )
+            jar("key") must_==
+                Seq( Cookie("key", "val1"), Cookie("key", "val3") )
+        }
+
+        "Return the first cookie with the given name" in {
+            jar.first("Not a Key") must_== None
+            jar.first("key2") must_== Some( Cookie("key2", "val2") )
+            jar.first("key") must_== Some( Cookie("key", "val1") )
+        }
+    }
+
 }
 
 

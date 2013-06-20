@@ -5,8 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import scala.io.Source
 import scala.collection.JavaConversions._
 
-import com.roundeights.skene.URL
-import com.roundeights.skene.Request
+import com.roundeights.skene.{URL, Request, Cookie, CookieJar}
 
 /**
  * The specific request implementation for Jetty
@@ -40,6 +39,10 @@ class ServletRequest (
             (map, key) => map + (key -> request.getHeader(key))
         }
     }
+
+    /** {@inheritDoct} */
+    override lazy val cookies
+        = CookieJar( request.getCookies.map( cookie => Cookie(cookie) ):_* )
 
 }
 
