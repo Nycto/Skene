@@ -165,6 +165,11 @@ trait Response {
     def content ( content: Renderable ): Response
 
     /**
+     * Sends a cookie
+     */
+    def cookie ( cookie: Cookie ): Response
+
+    /**
      * Flushes the response
      */
     def flush (): Response

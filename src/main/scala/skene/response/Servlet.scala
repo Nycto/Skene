@@ -8,7 +8,7 @@ import scala.collection.mutable.MutableList
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.AsyncContext
 
-import com.roundeights.skene.{Response, Renderable, Recover}
+import com.roundeights.skene.{Response, Renderable, Recover, Cookie}
 
 /**
  * A response that wraps a servlet
@@ -40,6 +40,8 @@ class ServletResponse (
                 case code: Response.Code => response.setStatus( code.code )
 
                 case content: Renderable => data += content
+
+                case cookie: Cookie => response.addCookie(cookie.toJavaCookie)
 
                 case _: Response.Flush => flush()
 

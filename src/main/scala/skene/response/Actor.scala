@@ -2,8 +2,7 @@ package com.roundeights.skene.response
 
 import scala.actors.Actor
 
-import com.roundeights.skene.Response
-import com.roundeights.skene.Renderable
+import com.roundeights.skene.{Response, Renderable, Cookie}
 
 /**
  * A response that wraps an actor and sends it messages
@@ -30,6 +29,12 @@ trait ActorResponse extends Response {
     /** {@inheritDoc} */
     override def content ( content: Renderable ): Response = {
         actor ! content
+        this
+    }
+
+    /** {@inheritDoc} */
+    def cookie ( cookie: Cookie ): Response = {
+        actor ! cookie
         this
     }
 
