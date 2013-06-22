@@ -114,20 +114,20 @@ object Response {
         case class Bmp() extends ContentType("image/bmp")
         case class Css() extends ContentType("text/css")
         case class Gif() extends ContentType("image/gif")
-        case class HTML() extends ContentType("text/html;charset=utf-8")
+        case class Html() extends ContentType("text/html;charset=utf-8")
         case class Icon() extends ContentType("image/x-icon")
         case class Jpeg() extends ContentType("image/jpeg")
-        case class Javascript() extends ContentType("application/x-javascript")
-        case class JSON() extends ContentType("application/json")
+        case class JavaScript() extends ContentType("application/x-javascript")
+        case class Json() extends ContentType("application/json")
         case class Pdf() extends ContentType("application/pdf")
         case class Png() extends ContentType("image/png")
-        case class SVG() extends ContentType("image/svg+xml")
+        case class Svg() extends ContentType("image/svg+xml")
         case class Swf() extends ContentType("application/x-shockwave-flash")
         case class Text() extends ContentType("text/plain")
         case class Tiff() extends ContentType("image/tiff")
-        case class XHTML() extends ContentType("application/xhtml+xml")
-        case class XML() extends ContentType("application/xml")
-        case class XSLT() extends ContentType("application/xslt+xml")
+        case class Xhtml() extends ContentType("application/xhtml+xml")
+        case class Xml() extends ContentType("application/xml")
+        case class Xslt() extends ContentType("application/xslt+xml")
         case class Zip() extends ContentType("application/zip")
     }
 
@@ -200,17 +200,17 @@ trait Response {
     /**
      * Clones this response and sets the Content-Type to HTML
      */
-    def isHtml: Response = contentType( Response.ContentType.HTML().mimeType )
+    def isHtml: Response = contentType( Response.ContentType.Html().mimeType )
 
     /**
      * Clones this response and sets the Content-Type to XML
      */
-    def isXML: Response = contentType( Response.ContentType.XML().mimeType )
+    def isXml: Response = contentType( Response.ContentType.Xml().mimeType )
 
     /**
      * Clones this response and sets the Content-Type to JSON
      */
-    def isJSON: Response = contentType( Response.ContentType.JSON().mimeType )
+    def isJson: Response = contentType( Response.ContentType.Json().mimeType )
 
     /**
      * Clones this response and sets the Content-Type to Plain Text
@@ -233,13 +233,13 @@ trait Response {
      * A helper for building a json response
      */
     def json ( renderable: Renderable ): Response
-        = content( renderable ).isJSON
+        = content( renderable ).isJson
 
     /**
      * A helper for building an XML response
      */
     def xml ( renderable: Renderable ): Response
-        = content( renderable ).isXML
+        = content( renderable ).isXml
 
     /**
      * Sends a 200 OK
