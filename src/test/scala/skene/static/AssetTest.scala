@@ -3,6 +3,7 @@ package test.scala.com.skene
 import org.specs2.mutable._
 
 import com.roundeights.skene.static._
+import com.roundeights.skene.Response.ContentType
 import java.io.File
 
 class AssetTest extends Specification {
@@ -35,6 +36,12 @@ class AssetTest extends Specification {
         "Add a version" in {
             Asset("/", "test.js").versioned("abc") must_== "test.abc.js"
             Asset("/", "test").versioned("abc") must_== "test.abc"
+        }
+
+        "Return a mime type" in {
+            Asset("/", "test.html").mimeType must_== Some(ContentType.Html())
+            Asset("/", "test.css").mimeType must_== Some(ContentType.Css())
+            Asset("/", "test").mimeType must_== None
         }
     }
 

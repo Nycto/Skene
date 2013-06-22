@@ -1,5 +1,6 @@
 package com.roundeights.skene.static
 
+import com.roundeights.skene.Response.ContentType
 import java.io.File
 
 /** @See Asset */
@@ -38,6 +39,31 @@ case class Asset( val root: File, val path: String ) {
     def versioned ( version: String ): String = {
         val base = "%s.%s".format( stripExt, version )
         ext.map( base + _ ).getOrElse( base )
+    }
+
+    /** Returns the mime type of this asset */
+    def mimeType: Option[ContentType] = {
+        ext.map( _.toLowerCase match {
+            case ".bmp"  => ContentType.Bmp()
+            case ".css"  => ContentType.Css()
+            case ".gif"  => ContentType.Gif()
+            case ".htm"  => ContentType.Html()
+            case ".html" => ContentType.Html()
+            case ".ico"  => ContentType.Icon()
+            case ".jpe"  => ContentType.Jpeg()
+            case ".jpeg" => ContentType.Jpeg()
+            case ".js"   => ContentType.JavaScript()
+            case ".json" => ContentType.Json()
+            case ".pdf"  => ContentType.Pdf()
+            case ".png"  => ContentType.Png()
+            case ".svg"  => ContentType.Svg()
+            case ".swf"  => ContentType.Swf()
+            case ".txt"  => ContentType.Text()
+            case ".tiff" => ContentType.Tiff()
+            case ".xml"  => ContentType.Xml()
+            case ".xslt" => ContentType.Xslt()
+            case ".zip"  => ContentType.Zip()
+        })
     }
 
 }
