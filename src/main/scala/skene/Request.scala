@@ -2,8 +2,9 @@ package com.roundeights.skene
 
 import scala.io.Source
 
-import java.io.ByteArrayInputStream
-import java.io.InputStream
+import java.io.{InputStream, ByteArrayInputStream}
+import java.util.{Date, TimeZone}
+import java.text.{SimpleDateFormat, ParseException}
 
 /**
  * Request companion
@@ -61,6 +62,15 @@ object Request {
             TRACE(), OPTIONS(), CONNECT(), PATCH()
         )
 
+    }
+
+    /**
+     * The date format for headers
+     */
+    private[Request] lazy val dateFormat = {
+        val format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
+        format.setTimeZone(TimeZone.getTimeZone("GMT"))
+        format
     }
 
 }
@@ -163,6 +173,17 @@ trait Request {
 
     /** {@inheritDoc} */
     override def toString: String = "[Request %s %s]".format( method, url )
+
+    /**
+     * Returns a header as a date
+     */
+    def getDateHeader( header: String ): Option[Date] = {
+        headers.get( header ).flatMap( date => try {
+            Some( Request.dateFormat.parse( date ) )
+        } catch {
+            case _: ParseException => None
+        })
+    }
 
 }
 

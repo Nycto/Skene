@@ -3,6 +3,7 @@ package test.scala.com.skene
 import org.specs2.mutable._
 
 import com.roundeights.skene._
+import java.util.Date
 
 class RequestTest extends Specification {
 
@@ -105,6 +106,26 @@ class RequestTest extends Specification {
             }
         }
 
+    }
+
+    "The Request.getDateHeader method" should {
+        val request = BareRequest ( headers = Map[String, String](
+            "valid" -> "Sun, 23 Jun 2013 15:24:35 PDT",
+            "invalid" -> "Some other string"
+        ))
+
+        "Return None with when the header isn't set" in {
+            request.getDateHeader("not set") must_== None
+        }
+
+        "Return None with when the header doesn't parse" in {
+            request.getDateHeader("invalid") must_== None
+        }
+
+        "Return a Date when the header is a date" in {
+            request.getDateHeader("valid") must_==
+                Some(new Date(1372026275000L))
+        }
     }
 
 }
