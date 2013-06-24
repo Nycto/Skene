@@ -67,7 +67,7 @@ object Request {
     /**
      * The date format for headers
      */
-    private[Request] lazy val dateFormat = {
+    private[skene] lazy val dateFormat = {
         val format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
         format.setTimeZone(TimeZone.getTimeZone("GMT"))
         format

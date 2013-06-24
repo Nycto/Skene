@@ -1,6 +1,7 @@
 package com.roundeights.skene
 
 import scala.language.implicitConversions
+import java.util.Date
 
 
 /**
@@ -184,6 +185,12 @@ trait Response {
      */
     def header( field: Response.HeaderField, value: String ): Response
         = header( Response.Header( field, value ) )
+
+    /**
+     * Sets a date based header in this response
+     */
+    def header( field: Response.HeaderField, value: Date ): Response
+        = header( Response.Header( field, Request.dateFormat.format(value) ) )
 
     /**
      * Sends a location header
