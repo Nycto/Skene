@@ -1,6 +1,7 @@
 package com.roundeights.skene
 
 import java.io.{InputStream, OutputStream, Reader, Writer, OutputStreamWriter}
+import java.io.{File, FileInputStream}
 import scala.xml.NodeSeq
 
 import scala.io.Codec
@@ -134,6 +135,9 @@ object Renderable {
 
     implicit def apply ( content: InputStream ): Renderable
         = new StreamRenderer( content )
+
+    implicit def apply ( content: File ): Renderable
+        = new StreamRenderer( new FileInputStream(content) )
 
 }
 
