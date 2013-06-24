@@ -205,24 +205,30 @@ trait Response {
         = header( Response.Header.ContentType(), value )
 
     /**
+     * Sends the given content type
+     */
+    def contentType ( value: Response.ContentType ): Response
+        = contentType( value.mimeType )
+
+    /**
      * Clones this response and sets the Content-Type to HTML
      */
-    def isHtml: Response = contentType( Response.ContentType.Html().mimeType )
+    def isHtml: Response = contentType( Response.ContentType.Html() )
 
     /**
      * Clones this response and sets the Content-Type to XML
      */
-    def isXml: Response = contentType( Response.ContentType.Xml().mimeType )
+    def isXml: Response = contentType( Response.ContentType.Xml() )
 
     /**
      * Clones this response and sets the Content-Type to JSON
      */
-    def isJson: Response = contentType( Response.ContentType.Json().mimeType )
+    def isJson: Response = contentType( Response.ContentType.Json() )
 
     /**
      * Clones this response and sets the Content-Type to Plain Text
      */
-    def isText: Response = contentType( Response.ContentType.Text().mimeType )
+    def isText: Response = contentType( Response.ContentType.Text() )
 
     /**
      * A helper for building an HTML response
