@@ -4,6 +4,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.security.MessageDigest
 import java.io.{File, FileInputStream}
 
+/** @see HashCache */
+object HashCache {
+
+    /** A shared hash cache */
+    private lazy val shared = new HashCache
+
+    /** Returns a shared HashCache instance */
+    def apply() = shared
+}
+
 /**
  * Generates and caches the hash of a file
  */

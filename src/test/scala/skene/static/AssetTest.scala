@@ -1,4 +1,4 @@
-package test.scala.com.skene
+package test.scala.com.skene.static
 
 import org.specs2.mutable._
 
@@ -42,6 +42,16 @@ class AssetTest extends Specification {
             Asset("/", "test.html").mimeType must_== Some(ContentType.Html())
             Asset("/", "test.css").mimeType must_== Some(ContentType.Css())
             Asset("/", "test").mimeType must_== None
+        }
+
+        "Canonicalize relative paths" in {
+            Asset("/", "/test.html").path must_== "test.html"
+            Asset("/", "../test.html").path must_== "test.html"
+            Asset("/", "path/../../test.html").path must_== "test.html"
+            Asset("/", "/path///test.html").path must_== "path/test.html"
+            Asset("/", "path/././test.html").path must_== "path/test.html"
+            Asset("/", "path/././test.html").path must_== "path/test.html"
+            Asset("/", "./..//../.").path must_== ""
         }
     }
 
