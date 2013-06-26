@@ -1,6 +1,6 @@
 package com.roundeights.skene.static
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap
 import java.security.MessageDigest
 import java.io.{File, FileInputStream}
 
@@ -43,23 +43,30 @@ class HashCache {
         digest.digest.map( "%02x".format(_) ).mkString
     }
 
+    /** Returns a canonicalized file */
+    private def canonicalize ( path: File ): Option[File] = {
+        val canonical = path.getCanonicalFile
+        if ( canonical.exists ) Some(canonical) else None
+    }
+
     /**
      * Hashes a file
      */
-    def hash ( file: File ): String = {
-        val canonical = file.getCanonicalFile
+    def hash ( file: File ): Option[String] = {
 
         def generateHash: String = {
-            val hash = sha1( file );
-            cache.put( file, (hash -> file.lastModified) );
+            val hash = sha1( file )
+            cache.put( file, (hash -> file.lastModified) )
             hash
         }
 
-        cache.get(canonical) match {
-            case null => generateHash
-            case entry if entry._2 < canonical.lastModified => entry._1
-            case _ => generateHash
-        }
+        canonicalize( file ).map( canonical => {
+            cache.get(canonical) match {
+                case null => generateHash
+                case entry if entry._2 < canonical.lastModified => entry._1
+                case _ => generateHash
+            }
+        })
     }
 
 }
