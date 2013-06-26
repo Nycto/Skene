@@ -1,6 +1,7 @@
 package com.roundeights.skene
 
 import com.roundeights.skene.matcher._
+import scala.concurrent.ExecutionContext
 
 /**
  * Helper methods creating matchers
@@ -86,5 +87,28 @@ trait Matcher {
      * Returns whether a given request matches
      */
     def matches ( request: Request ): Matcher.Result
+
+    /** Joins this matcher with a Handler */
+    def handle
+        ( handler: Handler )
+        ( implicit context: ExecutionContext )
+    : Handler with Matcher = {
+        val self = this
+        new Handler with Matcher {
+            /** {@inheritDoc} */
+            override def matches ( request: Request ): Matcher.Result
+                = self.matches( request )
+            /** {@inheritDoc} */
+            override def handle(
+                recover: Recover, request: Request, response: Response
+            ): Unit = {
+                handler.handle( recover, request, response )
+            }
+            /** {@inheritDoc} */
+            override def toString
+                = "Matcher/Handler(%s, %s)".format(self, handler)
+        }
+    }
+
 }
 
