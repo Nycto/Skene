@@ -5,7 +5,7 @@ import com.roundeights.skene.Renderable
 import java.io.File
 import java.util.Date
 
-/** @See Asset */
+/** @see Asset */
 object Asset {
 
     /** Creates an asset from a root string and path */
@@ -55,6 +55,9 @@ class Asset( val root: File, rawPath: String ) {
 
     /** The cleaned up path */
     val path = Asset.canonicalize( rawPath )
+
+    /** {@inheritDoc} */
+    override def toString = "Asset(%s, %s)".format(root, path)
 
     /** Returns the extension */
     def ext: Option[String] = Asset.ext( path )
