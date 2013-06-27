@@ -43,7 +43,10 @@ abstract class Skene (
     /**
      * A helper class for fluently building a dispatcher
      */
-    class Fluent ( private val matcher: Matcher ) {
+    class Fluent ( val matcher: Matcher ) {
+
+        /** {@inheritDoc} */
+        override def toString = "Fluent(%s)".format(matcher)
 
         def apply ( callback: (Recover, Request, Response) => Unit ): Unit
             = when( matcher )( Handler(callback) )
