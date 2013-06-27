@@ -73,26 +73,27 @@ class Asset( val root: File, rawPath: String ) {
 
     /** Returns the mime type of this asset */
     def mimeType: Option[ContentType] = {
-        ext.map( _.toLowerCase match {
-            case ".bmp"  => ContentType.Bmp()
-            case ".css"  => ContentType.Css()
-            case ".gif"  => ContentType.Gif()
-            case ".htm"  => ContentType.Html()
-            case ".html" => ContentType.Html()
-            case ".ico"  => ContentType.Icon()
-            case ".jpe"  => ContentType.Jpeg()
-            case ".jpeg" => ContentType.Jpeg()
-            case ".js"   => ContentType.JavaScript()
-            case ".json" => ContentType.Json()
-            case ".pdf"  => ContentType.Pdf()
-            case ".png"  => ContentType.Png()
-            case ".svg"  => ContentType.Svg()
-            case ".swf"  => ContentType.Swf()
-            case ".txt"  => ContentType.Text()
-            case ".tiff" => ContentType.Tiff()
-            case ".xml"  => ContentType.Xml()
-            case ".xslt" => ContentType.Xslt()
-            case ".zip"  => ContentType.Zip()
+        ext.flatMap( _.toLowerCase match {
+            case ".bmp"  => Some( ContentType.Bmp() )
+            case ".css"  => Some( ContentType.Css() )
+            case ".gif"  => Some( ContentType.Gif() )
+            case ".htm"  => Some( ContentType.Html() )
+            case ".html" => Some( ContentType.Html() )
+            case ".ico"  => Some( ContentType.Icon() )
+            case ".jpg"  => Some( ContentType.Jpeg() )
+            case ".jpeg" => Some( ContentType.Jpeg() )
+            case ".js"   => Some( ContentType.JavaScript() )
+            case ".json" => Some( ContentType.Json() )
+            case ".pdf"  => Some( ContentType.Pdf() )
+            case ".png"  => Some( ContentType.Png() )
+            case ".svg"  => Some( ContentType.Svg() )
+            case ".swf"  => Some( ContentType.Swf() )
+            case ".txt"  => Some( ContentType.Text() )
+            case ".tiff" => Some( ContentType.Tiff() )
+            case ".xml"  => Some( ContentType.Xml() )
+            case ".xslt" => Some( ContentType.Xslt() )
+            case ".zip"  => Some( ContentType.Zip() )
+            case _ => None
         })
     }
 
