@@ -135,7 +135,9 @@ class AssetHandlerTest extends Specification with Mockito {
             new AssetHandler( path => None )
                 .handle( recover, request, response )
 
-            there was one(recover).orRethrow( any[AssetNotFound] )
+            there was no(recover).orRethrow( any[Throwable] )
+            there was one(response).notFound
+            there was one(response).done
         }
 
         "Prevent traversal attacks" in {

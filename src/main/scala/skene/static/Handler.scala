@@ -4,9 +4,6 @@ import com.roundeights.skene.{Request, Response, Recover, Handler}
 import java.io.{File, IOException}
 import scala.concurrent.ExecutionContext
 
-/** Thrown when an asset can not be found */
-case class AssetNotFound() extends Exception
-
 /**
  * Dispenses an asset to the client
  */
@@ -56,7 +53,10 @@ class AssetHandler (
     ): Unit = {
 
         find( request ) match {
-            case None => recover.orRethrow( new AssetNotFound )
+            case None => {
+                response.notFound
+                response.done
+            }
 
             case Some(asset) if isInCache( request, asset ) => {
                 response.code( Response.Code.NotModified() )
