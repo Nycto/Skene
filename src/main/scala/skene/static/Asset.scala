@@ -111,8 +111,11 @@ class Asset( val root: File, rawPath: String ) {
         }
     }
 
-    /** Returns whether this asset exists and is readable */
-    def exists: Boolean = file.exists
+    /** Returns whether this asset exists, is a file, and is readable */
+    def exists: Boolean = {
+        val path = file
+        path.exists && path.isFile && path.canRead
+    }
 
 }
 
