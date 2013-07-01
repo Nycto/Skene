@@ -10,17 +10,24 @@ import com.roundeights.skene._
 
 class RenderableTest extends Specification with Mockito {
 
-    private def assertRenders ( renderable: Renderable ) = {
+    private def assertRenders (
+        renderable: Renderable, vs: String = "<p>Data</p>"
+    ) = {
         val stream = new ByteArrayOutputStream
         renderable.render(stream, Codec.UTF8)
         val result: String = stream.toString("UTF8")
-        result.getBytes("UTF8") must_== "<p>Data</p>".getBytes("UTF8")
+        result.getBytes("UTF8") must_== vs.getBytes("UTF8")
     }
 
     "Renderable objects" should {
 
         "render from a String" in {
             assertRenders( Renderable("<p>Data</p>") )
+
+            assertRenders(
+                Renderable("<p>Data that you might render</p>"),
+                "<p>Data that you might render</p>"
+            )
         }
 
         "render from a StringBuilder" in {

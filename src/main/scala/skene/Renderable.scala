@@ -22,11 +22,10 @@ trait Renderable {
  */
 object Renderable {
 
-    /** Encodes a string to a byte array using the given code */
+    /** Encodes a string to a byte array using the given encoding */
     def write ( content: String, to: OutputStream, using: Codec ): Unit = {
         val encoded = using.encoder.encode( CharBuffer.wrap(content) )
-        // -1 to compensate for the null byte
-        to.write( encoded.array, encoded.arrayOffset, encoded.capacity - 1 )
+        to.write( encoded.array, encoded.arrayOffset, content.length )
     }
 
     /**
