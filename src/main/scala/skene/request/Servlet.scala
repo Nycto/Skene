@@ -44,6 +44,9 @@ class ServletRequest (
     override lazy val cookies
         = CookieJar( request.getCookies.map( cookie => Cookie(cookie) ):_* )
 
+    /** {@inheritDoct} */
+    override def isSecure = request.isSecure
+
 }
 
 

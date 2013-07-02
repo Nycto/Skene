@@ -116,6 +116,11 @@ trait Request {
     def cookies: CookieJar
 
     /**
+     * Returns whether this request was made over a secure channel, like https
+     */
+    def isSecure: Boolean
+
+    /**
      * Returns a Source iterator over the body of this request.
      */
     def body: Source = Source.fromInputStream( bodyStream )
@@ -198,11 +203,12 @@ object BareRequest {
         body: String = "",
         headers: Map[String, String] = Map(),
         queryString: Option[String] = None,
-        cookies: CookieJar = new CookieJar
+        cookies: CookieJar = new CookieJar,
+        isSecure: Boolean = false
     ) = new BareRequest(
         url, params, method,
         new ByteArrayInputStream( body.getBytes ),
-        headers, queryString, cookies
+        headers, queryString, cookies, isSecure
     )
 }
 
@@ -216,7 +222,8 @@ class BareRequest (
     override val bodyStream: InputStream,
     override val headers: Map[String, String],
     override val queryString: Option[String],
-    override val cookies: CookieJar
+    override val cookies: CookieJar,
+    override val isSecure: Boolean
 ) extends Request
 
 /**
@@ -246,16 +253,16 @@ abstract class RequestDecorator
 
     /** {@inheritDoc} */
     override def cookies = inner.cookies
+
+    /** {@inheritDoc} */
+    override def isSecure = inner.isSecure
 }
 
 /**
  * A request wrapper that adds parameters to an existing request
  */
-class ParameterizedRequest
-    ( inner: Request, newParams: Map[String, String] )
-    extends RequestDecorator( inner )
-{
-    /** {@inheritDoc} */
-    override val params: Map[String, String] = newParams
-}
+class ParameterizedRequest(
+    inner: Request,
+    override val params: Map[String, String]
+) extends RequestDecorator( inner )
 
