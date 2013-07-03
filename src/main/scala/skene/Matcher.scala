@@ -62,7 +62,17 @@ object Matcher {
     /**
      * A matcher that looks at the HTTP Request method of a request
      */
-    def method ( method: Request.Method ) = new Method( method );
+    def method ( method: Request.Method ) = new Method( method )
+
+    /**
+     * A matcher that looks at whether a request is secure
+     */
+    def isSecure = new Secure( true )
+
+    /**
+     * A matcher that looks at whether a request is not secure
+     */
+    def notSecure = new Secure( false )
 
     /**
      * Builds a matcher from a callback

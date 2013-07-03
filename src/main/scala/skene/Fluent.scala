@@ -145,6 +145,16 @@ abstract class Skene (
     def patch ( path: String ): Fluent = isPatch and request(path)
 
     /**
+     * Adds a handler that matches secure requests
+     */
+    lazy val isSecure: Fluent = new Fluent( Matcher.isSecure )
+
+    /**
+     * Adds a handler that matches non-secure requests
+     */
+    lazy val notSecure: Fluent = new Fluent( Matcher.notSecure )
+
+    /**
      * Sets up a default handler
      */
     def default ( handler: Handler ): Unit = setDispatcher( _.default(handler) )
