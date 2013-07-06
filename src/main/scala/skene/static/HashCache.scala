@@ -2,7 +2,7 @@ package com.roundeights.skene.static
 
 import java.util.concurrent.ConcurrentHashMap
 import java.security.MessageDigest
-import java.io.{File, FileInputStream}
+import java.io.{File, InputStream}
 
 /** @see HashCache */
 object HashCache {
@@ -20,11 +20,10 @@ object HashCache {
 class HashCache {
 
     /** The internal cache of file hashes */
-    private val cache = new ConcurrentHashMap[File, (String, Long)]
+    private val cache = new ConcurrentHashMap[Asset, (String, Long)]
 
     /** Generates a hash from a file */
-    private def sha1 ( file: File ): String = {
-        val reader = new FileInputStream(file)
+    private def sha1 ( reader: InputStream ): String = {
 
         val buffer = new Array[Byte](1024 * 4)
         val digest = MessageDigest.getInstance("SHA-1")
@@ -50,23 +49,22 @@ class HashCache {
     }
 
     /**
-     * Hashes a file
+     * Hashes an asset
      */
-    def hash ( file: File ): Option[String] = {
+    def hash ( asset: Asset.Reader ): String = {
 
         def generateHash: String = {
-            val hash = sha1( file )
-            cache.put( file, (hash -> file.lastModified) )
+            val hash = sha1( asset.stream )
+            cache.put( asset.asset, hash -> asset.modified.getTime )
             hash
         }
 
-        canonicalize( file ).map( canonical => {
-            cache.get(canonical) match {
-                case null => generateHash
-                case entry if entry._2 < canonical.lastModified => entry._1
-                case _ => generateHash
-            }
-        })
+        cache.get( asset.asset ) match {
+            case null => generateHash
+            case (hash, cachedTime) if asset.modified.getTime <= cachedTime
+                => hash
+            case _ => generateHash
+        }
     }
 
 }

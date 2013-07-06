@@ -1,19 +1,107 @@
 package com.roundeights.skene.static
 
 import scala.concurrent.ExecutionContext
-import java.io.File
 import scala.xml.Utility
+import java.io.{File, FileInputStream}
+import java.util.Date
 import com.roundeights.skene.{Matcher, Request, Handler}
+
+/** @see AssetLoader */
+object AssetLoader {
+
+    /** Finds an asset within the given directory */
+    class DirFinder(
+        private val root: File
+    ) extends Function1[Asset, Option[Asset.Reader]] {
+
+        /** Create a dir finder from a string path */
+        def this ( root: String ) = this( new File( root ) )
+
+        /** {@inheritDoc} */
+        override def toString = "AssetFinder(%s)".format(root)
+
+        /** {@inheritDoc} */
+        override def apply(needle: Asset): Option[Asset.Reader] = {
+            val path = new File( root, needle.path )
+            if ( !path.exists || !path.isFile || !path.canRead ) {
+                None
+            }
+            else {
+                Some( new Asset.Reader {
+                    override def asset = needle
+                    override def stream = new FileInputStream(path)
+                    override def modified = new Date(path.lastModified)
+                })
+            }
+        }
+    }
+
+    /** Constructs a new instance that searches for assets in a root dir */
+    def fromDir
+        ( root: File, prefix: String )
+        ( implicit context: ExecutionContext )
+    : AssetLoader = new AssetLoader(
+        prefix, HashCache(), new DirFinder(new File(root, prefix))
+    )
+
+    /** Constructs a new instance that searches for assets in a root dir */
+    def fromDir
+        ( root: String, prefix: String )
+        ( implicit context: ExecutionContext )
+    : AssetLoader = fromDir( new File(root), prefix )
+
+
+    /** Generates a jar based asset finder */
+    class JarFinder(
+        clazz: Class[_],
+        private val subdir: String
+    ) extends Function1[Asset, Option[Asset.Reader]] {
+
+        /** The class loader to use for finding resources */
+        private val loader = clazz.getClassLoader
+
+        /** The jar file assets are being loaded from */
+        private val jar
+            = clazz.getProtectionDomain.getCodeSource.getLocation.toURI
+
+        /** The modification date of the jar file */
+        private val jarModified = new Date( new File(jar).lastModified )
+
+        /** {@inheritDoc} */
+        override def toString = "AssetFinder(%s:%s)".format(jar, subdir)
+
+        /** {@inheritDoc} */
+        override def apply(needle: Asset): Option[Asset.Reader] = {
+            val path = needle.inSubdir( subdir )
+            Option( loader.getResource( path ) ).map( _ => {
+                new Asset.Reader {
+                    override def asset = needle
+                    override def stream = loader.getResourceAsStream(path)
+                    override def modified = jarModified
+                }
+            })
+        }
+    }
+
+    /** Constructs a new instance that searches for assets */
+    def fromJar
+        ( clazz: Class[_], prefix: String )
+        ( implicit context: ExecutionContext )
+    = new AssetLoader( prefix, HashCache(), new JarFinder(clazz, prefix) )
+
+}
 
 /** Builds the URLs and HTML needed to load an asset */
 class AssetLoader (
     pathPrefix: String,
     private val hash: HashCache,
-    private val finder: (String) => Option[Asset],
-    private val asString: Option[String] = None
+    private val finder: (Asset) => Option[Asset.Reader]
 )(
     implicit context: ExecutionContext
 ) {
+
+    /** {@inheritDoc} */
+    override def toString = "AssetLoader(%s, %s)".format(pathPrefix, finder)
 
     /** The prefix to attach to each asset */
     private val prefix = {
@@ -21,41 +109,25 @@ class AssetLoader (
         if ( canonical == "" ) None else Some(canonical)
     }
 
-    /** Constructs a new instance that searches for assets in a root dir */
-    def this
-        ( root: File, prefix: String )
-        ( implicit context: ExecutionContext )
-    = this(
-        prefix,
-        HashCache(),
-        (path: String) => {
-            val asset = Asset( root, path )
-            if ( asset.exists ) Some(asset) else None
-        },
-        Some( root.toString + ", " + prefix )
-    )
-
     /** Returns a companion Handler */
     def handler: Handler with Matcher = {
         Matcher.and(
             Matcher.method( Request.Method.GET() ),
             Matcher.path( prefix.map( "/" + _ ).getOrElse("") + "/::asset" )
         ).handle(
-            new AssetHandler( finder, asString )
+            new AssetHandler( finder )
         )
     }
 
     /** Returns the relative URL for an asset */
     def url ( path: String ): Option[String] = {
-        for {
-            asset <- finder( Asset.canonicalize(path) )
-            sha1 <- hash.hash(asset.file)
-        } yield "%s/%s.%s%s".format(
+        val asset = Asset(path)
+        finder( asset ).map( hash.hash _ ).map(sha1 => "%s/%s.%s%s".format(
             prefix.map( "/" + _ ).getOrElse(""),
             asset.stripExt,
             sha1.take(8),
             asset.ext.getOrElse("")
-        )
+        ))
     }
 
     /** Formats a list of assets */

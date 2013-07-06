@@ -23,19 +23,19 @@ class AssetHandlerTest extends Specification with Mockito {
     }
 
     // Generates a mock asset
-    def mockAsset ( modified: Option[Date] ) = {
-        val asset = mock[Asset]
-        asset.renderable returns renderable
-        asset.modified returns modified
-        asset.mimeType returns Some( Response.ContentType.JavaScript() )
-        asset
+    def mockReader ( modified: Date = new Date(123456789) ) = {
+        val reader = mock[Asset.Reader]
+        reader.renderable returns renderable
+        reader.modified returns modified
+        reader.mimeType returns Some( Response.ContentType.JavaScript() )
+        reader
     }
 
     // Generates a mock Asset handler
-    def mockHandler ( asset: Asset ) = {
+    def mockHandler ( reader: Asset.Reader ) = {
         new AssetHandler( path => {
-            path must_== "path.js"
-            Some( asset )
+            path must_== Asset("path.js")
+            Some( reader )
         })
     }
 
@@ -46,7 +46,7 @@ class AssetHandlerTest extends Specification with Mockito {
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset(None) ).handle( recover, request, response )
+            mockHandler( mockReader() ).handle( recover, request, response )
 
             there was one(response).content(renderable)
             there was one(response).done
@@ -58,7 +58,7 @@ class AssetHandlerTest extends Specification with Mockito {
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset(None) ).handle( recover, request, response )
+            mockHandler( mockReader() ).handle( recover, request, response )
 
             there was one(response).content(renderable)
             there was one(response).done
@@ -73,7 +73,7 @@ class AssetHandlerTest extends Specification with Mockito {
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset(None) ).handle( recover, request, response )
+            mockHandler( mockReader() ).handle( recover, request, response )
 
             there was one(response).content(renderable)
             there was one(response).done
@@ -81,13 +81,11 @@ class AssetHandlerTest extends Specification with Mockito {
         }
 
         "Serve a file when the date modified is newer" in {
-            val request = mockRequest(
-                "path.js", Some(new Date(1000L))
-            )
+            val request = mockRequest( "path.js", Some(new Date(1000L)) )
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset( Some(new Date(2000L)) ) )
+            mockHandler( mockReader( new Date(2000L) ) )
                 .handle( recover, request, response )
 
             there was one(response).content(renderable)
@@ -96,13 +94,11 @@ class AssetHandlerTest extends Specification with Mockito {
         }
 
         "Send back a 304 when the file age is equal" in {
-            val request = mockRequest(
-                "path.js", Some(new Date(1000L))
-            )
+            val request = mockRequest( "path.js", Some(new Date(1000L)) )
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset( Some(new Date(1000L)) ) )
+            mockHandler( mockReader( new Date(1000L) ) )
                 .handle( recover, request, response )
 
             there was no(response).content(renderable)
@@ -112,13 +108,11 @@ class AssetHandlerTest extends Specification with Mockito {
         }
 
         "Send back a 304 when the file is older" in {
-            val request = mockRequest(
-                "path.js", Some(new Date(2000L))
-            )
+            val request = mockRequest( "path.js", Some(new Date(2000L)) )
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset( Some(new Date(1000L)) ) )
+            mockHandler( mockReader( new Date(1000L) ) )
                 .handle( recover, request, response )
 
             there was no(response).content(renderable)
@@ -145,7 +139,7 @@ class AssetHandlerTest extends Specification with Mockito {
             val response = mock[Response]
             val recover = mock[Recover]
 
-            mockHandler( mockAsset(None) ).handle( recover, request, response )
+            mockHandler( mockReader() ).handle( recover, request, response )
 
             there was one(response).content(renderable)
             there was one(response).done

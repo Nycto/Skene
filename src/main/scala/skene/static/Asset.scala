@@ -2,17 +2,15 @@ package com.roundeights.skene.static
 
 import com.roundeights.skene.Response.ContentType
 import com.roundeights.skene.Renderable
-import java.io.File
+import scala.io.Source
+import java.io.{File, InputStream}
 import java.util.Date
 
 /** @see Asset */
 object Asset {
 
-    /** Creates an asset from a root string and path */
-    def apply ( root: String, path: String ) = new Asset(new File(root), path)
-
-    /** Creates an asset from a root and path */
-    def apply ( root: File, path: String ) = new Asset(root, path)
+    /** Creates an asset */
+    def apply ( path: String ) = new Asset(path)
 
     /** Returns the extension */
     private[static] def ext( path: String ): Option[String] = {
@@ -46,18 +44,56 @@ object Asset {
         }).reverse.mkString( File.separator )
     }
 
+    /** An interface for accessing Asset data */
+    trait Reader {
+
+        /** Returns the asset behind this reader */
+        def asset: Asset
+
+        /** Returns an input stream of this asset */
+        def stream: InputStream
+
+        /** Returns the 'last modified' date of an asset */
+        def modified: Date
+
+        /** Returns a renderable version of this asset */
+        def renderable: Renderable = Renderable( stream )
+
+        /** Returns the mime type of this asset */
+        def mimeType: Option[ContentType] = asset.mimeType
+
+        /** Returns the content as a string */
+        def content: String = Source.fromInputStream( stream ).mkString
+    }
+
 }
 
 /**
  * Represents an asset to serve back
  */
-class Asset( val root: File, rawPath: String ) {
+class Asset( rawPath: String ) extends Equals {
 
     /** The cleaned up path */
     val path = Asset.canonicalize( rawPath )
 
     /** {@inheritDoc} */
-    override def toString = "Asset(%s, %s)".format(root, path)
+    override def toString = "Asset(%s)".format(path)
+
+    /** {@inheritDoc} */
+    override def equals ( other: Any ): Boolean = other match {
+        case asset: Asset if asset.canEqual(this) => path == asset.path
+        case _ => false
+    }
+
+    /** {@inheritDoc} */
+    override def hashCode: Int = path.hashCode
+
+    /** {@inheritDoc} */
+    override def canEqual( other: Any ): Boolean = other.isInstanceOf[Asset]
+
+    /** Returns the path prefixed with a subdirectory */
+    def inSubdir ( subdir: String )
+        = Asset.canonicalize( Asset.canonicalize( subdir ) + "/" + path )
 
     /** Returns the extension */
     def ext: Option[String] = Asset.ext( path )
@@ -71,7 +107,13 @@ class Asset( val root: File, rawPath: String ) {
         ext.map( base + _ ).getOrElse( base )
     }
 
-    /** Returns the mime type of this asset */
+    /** Removes the version from this Asset */
+    def unversioned: Asset = {
+        val base = Asset.stripExt( Asset.stripExt( path ) )
+        Asset( Asset.ext( path ).map( base + _ ).getOrElse( base ) )
+    }
+
+    /** Returns the mime type of this asset based on the file extension */
     def mimeType: Option[ContentType] = {
         ext.flatMap( _.toLowerCase match {
             case ".bmp"  => Some( ContentType.Bmp() )
@@ -95,26 +137,6 @@ class Asset( val root: File, rawPath: String ) {
             case ".zip"  => Some( ContentType.Zip() )
             case _ => None
         })
-    }
-
-    /** Returns a full file representing this asset */
-    def file: File = new File( root, path )
-
-    /** Returns a renderable representation of this asset */
-    def renderable: Renderable = Renderable( file )
-
-    /** Returns the modificaion time of this file */
-    def modified: Option[Date] = {
-        file match {
-            case asset if asset.exists => Some( new Date(asset.lastModified) )
-            case _ => None
-        }
-    }
-
-    /** Returns whether this asset exists, is a file, and is readable */
-    def exists: Boolean = {
-        val path = file
-        path.exists && path.isFile && path.canRead
     }
 
 }
