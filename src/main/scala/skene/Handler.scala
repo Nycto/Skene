@@ -78,7 +78,12 @@ abstract class Handler (
         request: HttpServletRequest, response: HttpServletResponse
     ): Unit = {
 
-        val async = request.startAsync();
+        // If async isn't supported, try enabling it. This is required
+        // for tomcat servers
+        if ( !request.isAsyncSupported )
+            request.setAttribute("org.apache.catalina.ASYNC_SUPPORTED", true)
+
+        val async = request.startAsync
 
         val wrappedReq = new ServletRequest( request )
         val wrappedResp = new ServletResponse( async, response ).isHtml
