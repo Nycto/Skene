@@ -42,6 +42,9 @@ case class Cookie (
         cookie
     }
 
+    /** Deletes this cookie */
+    def delete = Cookie(name, value, Some(0), domain, path, secure, httpOnly)
+
 }
 
 /**
