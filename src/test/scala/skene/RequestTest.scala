@@ -128,5 +128,28 @@ class RequestTest extends Specification {
         }
     }
 
+    "The Request.getContentType method" should {
+
+        "Return None with when the header isn't set" in {
+            request.getContentType must_== None
+        }
+
+        "Return the header when it is set" in {
+            val request = BareRequest ( headers = Map[String, String](
+                "Content-Type" -> "text/plain"
+            ))
+
+            request.getContentType must_== Some("text/plain")
+        }
+
+        "Return the header when it is set, excluding the encoding" in {
+            val request = BareRequest ( headers = Map[String, String](
+                "Content-Type" -> "text/plain; charset=UTF-8"
+            ))
+
+            request.getContentType must_== Some("text/plain")
+        }
+    }
+
 }
 

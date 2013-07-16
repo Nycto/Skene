@@ -190,6 +190,12 @@ trait Request {
         })
     }
 
+    /**
+     * Returns the content type of this request, if it was defined
+     */
+    def getContentType: Option[String]
+        = headers.get("Content-Type").map( _.takeWhile( _ != ';' ) )
+
 }
 
 /**
