@@ -166,6 +166,12 @@ abstract class Skene (
         = default( Handler(handler) )
 
     /**
+     * Sets up a default handler from a callback
+     */
+    def default ( handler: (Recover, Request, Response) => Unit ): Unit
+        = default( Handler(handler) )
+
+    /**
      * Sets up the handler for when exceptions are thrown
      */
     def error (
