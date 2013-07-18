@@ -8,10 +8,13 @@ import scala.annotation.tailrec
  */
 object Dispatcher {
 
-    /**
-     * The type for error handlers
-     */
-    type OnError = (Request, Response) => PartialFunction[Throwable, Unit]
+    /** The type for error handlers */
+    type OnError
+        = (Recover, Request, Response) => PartialFunction[Throwable, Unit]
+
+    /** The type for simple error handlers */
+    type SimpleOnError
+        = (Request, Response) => PartialFunction[Throwable, Unit]
 
     /**
      * The handler to use when nothing matches and there is no default
@@ -91,6 +94,15 @@ class Dispatcher (
     def error ( handler: Dispatcher.OnError ): Dispatcher
         = new Dispatcher( entries, default, Some(handler) )
 
+    /**
+     * Changes the error handler for this dispatcher
+     */
+    def error ( handler: Dispatcher.SimpleOnError ): Dispatcher = {
+        new Dispatcher( entries, default, Some(
+            (_, req, resp) => handler(req, resp)
+        ) )
+    }
+
     /** {@inheritDoc} */
     override def handle (
         recover: Recover, request: Request, response: Response
@@ -114,7 +126,7 @@ class Dispatcher (
         val customRecover = onError match {
             case None => recover
             case Some(onError) =>
-                Recover.using( onError( request, response ) )
+                Recover.using( onError( recover, request, response ) )
                     .orFallBackTo( recover )
         }
 

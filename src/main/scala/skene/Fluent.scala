@@ -174,9 +174,14 @@ abstract class Skene (
     /**
      * Sets up the handler for when exceptions are thrown
      */
-    def error (
-        handler: (Request, Response) => PartialFunction[Throwable, Unit]
-    ): Unit = setDispatcher( _.error( handler ) )
+    def error ( handler: Dispatcher.OnError ): Unit
+        = setDispatcher( _.error( handler ) )
+
+    /**
+     * Sets up the handler for when exceptions are thrown
+     */
+    def error ( handler: Dispatcher.SimpleOnError ): Unit
+        = setDispatcher( _.error( handler ) )
 
     /**
      * Sets up a handler for the root directory

@@ -188,6 +188,26 @@ class DispatcherTest extends Specification with Mockito {
             there was one(runnable).run()
         }
 
+        "Be given a reference to the default recover instance" in {
+            val runnable = mock[Runnable]
+
+            val recover = Recover.using {
+                case thrown: Throwable => {
+                    thrown must_== err
+                    runnable.run()
+                }
+            }
+
+            new Dispatcher()
+                .add( Matcher.always, throwingHandler )
+                .error ( (rec, req, resp) => {
+                    case thrown: Throwable => rec.orRethrow(thrown)
+                })
+                .handle( recover, request, response )
+
+            there was one(runnable).run()
+        }
+
     }
 
     "A Dispatcher used as a Matcher" should {
