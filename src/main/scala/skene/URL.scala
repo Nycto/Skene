@@ -19,26 +19,18 @@ object URL {
 /**
  * A URL
  */
-class URL ( url: String ) {
+class URL private ( private val inner: JavaURL ) extends Equals {
 
-    /**
-     * The internal URL handler being scala-ized
-     */
-    private val inner = new JavaURL(url);
+    /** Constructs a URL from a string */
+    def this ( url: String ) = this( new JavaURL(url) )
 
-    /**
-     * Converts this URL to a string
-     */
+    /** {@inheritDoc} */
     override def toString = inner.toString
 
-    /**
-     * Returns an integer hash of this URL
-     */
+    /** {@inheritDoc} */
     override def hashCode = inner.hashCode
 
-    /**
-     * Determines object equality
-     */
+    /** {@inheritDoc} */
     override def equals(other: Any): Boolean = other match {
         case that: URL =>
             that.canEqual(this) &&
@@ -46,22 +38,25 @@ class URL ( url: String ) {
         case _ => false
     }
 
-    /**
-     * A helper method for determining equality
-     */
-    def canEqual(other: Any): Boolean = other.isInstanceOf[URL]
+    /** {@inheritDoc} */
+    override def canEqual(other: Any): Boolean = other.isInstanceOf[URL]
 
-    /**
-     * Returns the host of this URL
-     */
+    /** Returns the host of this URL */
     def host: String = inner.getHost
 
-    /**
-     * Returns the path of this URL
-     */
+    /** Returns the path of this URL */
     def path: Option[String] = inner.getPath match {
         case "" => None
         case path => Some(path)
+    }
+
+    /** Replaces the path of this directory */
+    def withPath ( path: String ) = {
+        val query = if (inner.getQuery == null) "" else ("?" + inner.getQuery)
+        new URL( new JavaURL(
+            inner.getProtocol, inner.getHost, inner.getPort,
+            "/" + path.dropWhile( _ == '/' ) + query
+        ) )
     }
 
 }

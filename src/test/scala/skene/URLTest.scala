@@ -55,5 +55,28 @@ class URLTest extends Specification {
             URL("https://www.example.com").path must_== None
         }
     }
+
+    "Replacing the path of a URL" should {
+
+        "Handle simple URLs" in {
+            URL("https://www.example.com/path/to/file.ext")
+                .withPath("/new_path") must_==
+                    URL("https://www.example.com/new_path")
+
+            URL("https://www.example.com/path/to/file.ext")
+                .withPath("new_path") must_==
+                    URL("https://www.example.com/new_path")
+
+            URL("https://www.example.com")
+                .withPath("new_path") must_==
+                    URL("https://www.example.com/new_path")
+        }
+
+        "Leave protocols, hosts, ports, and query strings in place" in {
+            URL("ftp://example.com:90/path?query")
+                .withPath("/new_path") must_==
+                    URL("ftp://example.com:90/new_path?query")
+        }
+    }
 }
 
