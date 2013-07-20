@@ -34,9 +34,7 @@ abstract class Skene (
     override def matches ( request: Request ): Matcher.Result
         = dispatcher.get.matches( request )
 
-    /**
-     * Adds a new matcher
-     */
+    /** Adds a new matcher */
     def when ( matcher: Matcher )( handler: Handler ): Unit
         = setDispatcher( _.add( matcher, handler ) )
 
@@ -82,130 +80,84 @@ abstract class Skene (
     ): Unit
         = dispatcher.get.handle( recover, request, response )
 
-    /**
-     * Adds a handler for any request matching the given path
-     */
+    /** Adds a handler for any request matching the given path */
     def request ( path: String ): Fluent
         = new Fluent( Matcher.path(path) )
 
-    /**
-     * A helper method for building method specific handlers
-     */
+    /** A helper method for building method specific handlers */
     def method ( method: Request.Method ): Fluent
         = new Fluent( Matcher.method( method ) )
 
-    /**
-     * Applies a handler for GET requests
-     */
+    /** Applies a handler for GET requests */
     lazy val isGet: Fluent = method( Request.Method.GET() )
 
-    /**
-     * Applies a handler for POST requests
-     */
+    /** Applies a handler for POST requests */
     lazy val isPost: Fluent = method( Request.Method.POST() )
 
-    /**
-     * Applies a handler for DELETE requests
-     */
+    /** Applies a handler for DELETE requests */
     lazy val isDelete: Fluent = method( Request.Method.DELETE() )
 
-    /**
-     * Applies a handler for PUT requests
-     */
+    /** Applies a handler for PUT requests */
     lazy val isPut: Fluent = method( Request.Method.PUT() )
 
-    /**
-     * Applies a handler for PATCH requests
-     */
+    /** Applies a handler for PATCH requests */
     lazy val isPatch: Fluent = method( Request.Method.PATCH() )
 
-    /**
-     * Adds a handler for GET requests to the given path
-     */
+    /** Adds a handler for GET requests to the given path */
     def get ( path: String ): Fluent = isGet and request(path)
 
-    /**
-     * Adds a handler for POST requests to the given path
-     */
+    /** Adds a handler for POST requests to the given path */
     def post ( path: String ): Fluent = isPost and request(path)
 
-    /**
-     * Adds a handler for DELETE requests to the given path
-     */
+    /** Adds a handler for DELETE requests to the given path */
     def delete ( path: String ): Fluent = isDelete and request(path)
 
-    /**
-     * Adds a handler for PUT requests to the given path
-     */
+    /** Adds a handler for PUT requests to the given path */
     def put ( path: String ): Fluent = isPut and request(path)
 
-    /**
-     * Adds a handler for PATCH requests to the given path
-     */
+    /** Adds a handler for PATCH requests to the given path */
     def patch ( path: String ): Fluent = isPatch and request(path)
 
-    /**
-     * Adds a handler that matches secure requests
-     */
+    /** Adds a handler that matches secure requests */
     lazy val isSecure: Fluent = new Fluent( Matcher.isSecure )
 
-    /**
-     * Adds a handler that matches non-secure requests
-     */
+    /** Adds a handler that matches non-secure requests */
     lazy val notSecure: Fluent = new Fluent( Matcher.notSecure )
 
-    /**
-     * Sets up a default handler
-     */
+    /** Sets up a default handler */
     def default ( handler: Handler ): Unit = setDispatcher( _.default(handler) )
 
-    /**
-     * Sets up a default handler from a callback
-     */
+    /** Sets up a default handler from a callback */
     def default ( handler: (Request, Response) => Unit ): Unit
         = default( Handler(handler) )
 
-    /**
-     * Sets up a default handler from a callback
-     */
+    /** Sets up a default handler from a callback */
     def default ( handler: (Recover, Request, Response) => Unit ): Unit
         = default( Handler(handler) )
 
-    /**
-     * Sets up the handler for when exceptions are thrown
-     */
+    /** Sets up the handler for when exceptions are thrown */
     def error ( handler: Dispatcher.OnError ): Unit
         = setDispatcher( _.error( handler ) )
 
-    /**
-     * Sets up the handler for when exceptions are thrown
-     */
+    /** Sets up the handler for when exceptions are thrown */
     def error ( handler: Dispatcher.SimpleOnError ): Unit
         = setDispatcher( _.error( handler ) )
 
-    /**
-     * Sets up a handler for the root directory
-     */
+    /** Sets up a handler for the root directory */
     lazy val index: Fluent = request("/")
 
-    /**
-     * Uses a custom callback as a matcher
-     */
+    /** Uses a custom callback as a matcher */
     def when ( callback: Request => Boolean ): Fluent = {
         new Fluent( Matcher.call { request =>
             Matcher.Result( callback(request) )
         } )
     }
 
-    /**
-     * Uses a custom thunk as a matcher
-     */
+    /** Uses a custom thunk as a matcher */
     def when ( callback: => Boolean ): Fluent
         = new Fluent( Matcher.call { Matcher.Result( callback ) } )
 
-    /**
-     * Delegates to another object if it matches
-     */
+    /** Delegates to another object if it matches */
     def delegate ( to: Handler with Matcher ): Unit = when( to )( to )
 
 }
