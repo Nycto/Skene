@@ -8,27 +8,41 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * A fluent interface for building Skene dispatchers
  */
-abstract class Skene (
+class Skene (
     implicit context: ExecutionContext
 ) extends Handler with Matcher {
 
-    /**
-     * The dispatcher to collect into
-     */
-    private val dispatcher = new AtomicReference( new Dispatcher )
+    /** An interface for managing a Dispatcher in a thread safe way */
+    private class LazyAtomicRef[T]
+        ( create: => T )
+        ( implicit ev: Null <:< T )
+    {
 
-    /**
-     * Changes the value of the dispatcher in a thread safe manner
-     */
-    @tailrec private def setDispatcher (
-        callback: Dispatcher => Dispatcher
-    ): Unit = {
-        val current = dispatcher.get
-        val changed = callback( current )
-        if ( !dispatcher.compareAndSet(current, changed) )
-            setDispatcher( callback )
+        /** The internal reference */
+        private val ref = new AtomicReference[T]
+
+        /** Returns the current ref */
+        @tailrec final def get: T = {
+            val value = ref.get
+            if ( value != null )
+                value
+            else if ( ref.compareAndSet(null, create) )
+                create
+            else
+                get
+        }
+
+        /** Changes the value of the ref in a thread safe manner */
+        @tailrec final def set ( callback: T => T ): Unit = {
+            val current = get
+            val changed = callback( current )
+            if ( !ref.compareAndSet(current, changed) )
+                set( callback )
+        }
     }
 
+    /** The internal dispatcher */
+    private val dispatcher = new LazyAtomicRef[Dispatcher](new Dispatcher)
 
     /** {@inheritDoc} */
     override def matches ( request: Request ): Matcher.Result
@@ -36,7 +50,7 @@ abstract class Skene (
 
     /** Adds a new matcher */
     def when ( matcher: Matcher )( handler: Handler ): Unit
-        = setDispatcher( _.add( matcher, handler ) )
+        = dispatcher.set( _.add( matcher, handler ) )
 
     /**
      * A helper class for fluently building a dispatcher
@@ -71,14 +85,17 @@ abstract class Skene (
          */
         def or ( other: Fluent ): Fluent
             = new Fluent( Matcher.or(matcher, other.matcher) )
-
     }
 
     /** {@inheritDoc} */
     override def handle(
         recover: Recover, request: Request, response: Response
-    ): Unit
-        = dispatcher.get.handle( recover, request, response )
+    ): Unit = {
+        dispatcher.get.handle( recover, request, response )
+    }
+
+    /** Adds a handler that matches all requests */
+    def all: Fluent = new Fluent( Matcher.always )
 
     /** Adds a handler for any request matching the given path */
     def request ( path: String ): Fluent
@@ -125,7 +142,8 @@ abstract class Skene (
     lazy val notSecure: Fluent = new Fluent( Matcher.notSecure )
 
     /** Sets up a default handler */
-    def default ( handler: Handler ): Unit = setDispatcher( _.default(handler) )
+    def default ( handler: Handler ): Unit
+        = dispatcher.set( _.default(handler) )
 
     /** Sets up a default handler from a callback */
     def default ( handler: (Request, Response) => Unit ): Unit
@@ -137,11 +155,11 @@ abstract class Skene (
 
     /** Sets up the handler for when exceptions are thrown */
     def error ( handler: Dispatcher.OnError ): Unit
-        = setDispatcher( _.error( handler ) )
+        = dispatcher.set( _.error( handler ) )
 
     /** Sets up the handler for when exceptions are thrown */
     def error ( handler: Dispatcher.SimpleOnError ): Unit
-        = setDispatcher( _.error( handler ) )
+        = dispatcher.set( _.error( handler ) )
 
     /** Sets up a handler for the root directory */
     lazy val index: Fluent = request("/")
