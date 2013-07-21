@@ -14,6 +14,10 @@ object URL {
     implicit def apply ( url: StringBuffer ) = new URL( url.toString )
     implicit def urlToString ( url: URL ) = url.toString
     def unapply ( url: URL ): Option[String] = Some(url.toString)
+
+    /** Trims the leading and trailing slashes from a path */
+    private[URL] def trimPath( path: String )
+        = path.dropWhile(_ == '/').reverse.dropWhile(_ == '/').reverse
 }
 
 /**
@@ -57,6 +61,16 @@ class URL private ( private val inner: JavaURL ) extends Equals {
             inner.getProtocol, inner.getHost, inner.getPort,
             "/" + path.dropWhile( _ == '/' ) + query
         ) )
+    }
+
+    /** Prefixes the path of this URL with a specific directory */
+    def prefixPath ( prefix: String ) = {
+        val trimmed = URL.trimPath( prefix )
+        withPath( path match {
+            case None => trimmed
+            case Some(path) if path.dropWhile(_ == '/') == "" => trimmed
+            case Some(path) => trimmed + "/" + path.dropWhile(_ == '/')
+        })
     }
 
 }

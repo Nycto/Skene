@@ -78,5 +78,24 @@ class URLTest extends Specification {
                     URL("ftp://example.com:90/new_path?query")
         }
     }
+
+    "Prefixing the path of a URL" should {
+
+        "Add to the existing path" in {
+            URL("https://www.example.com/path/to/file.ext")
+                .prefixPath("/new_path") must_==
+                    URL("https://www.example.com/new_path/path/to/file.ext")
+        }
+
+        "Set the path if one doesn't exist" in {
+            URL("https://www.example.com/")
+                .prefixPath("/new_path") must_==
+                    URL("https://www.example.com/new_path")
+
+            URL("https://www.example.com")
+                .prefixPath("/new_path") must_==
+                    URL("https://www.example.com/new_path")
+        }
+    }
 }
 
