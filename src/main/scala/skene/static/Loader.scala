@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext
 import scala.xml.Utility
 import java.io.{File, FileInputStream}
 import java.util.Date
-import com.roundeights.skene.{Matcher, Request, Handler}
+import com.roundeights.skene.{Matcher, Request, Response, Handler}
 
 /** @see AssetLoader */
 object AssetLoader {
@@ -118,6 +118,19 @@ class AssetLoader (
             new AssetHandler( finder )
         )
     }
+
+    /** Serves the given asset to the given response */
+    def serve ( asset: Asset, request: Request, response: Response ): Unit
+        = new AssetHandler( finder ).serve( asset, request, response )
+
+    /** Serves the given asset to the given response */
+    def serve ( asset: String, request: Request, response: Response ): Unit
+        = new AssetHandler( finder ).serve( asset, request, response )
+
+    /** Serves the given asset to the given response */
+    def serve (
+        asset: Option[String], request: Request, response: Response
+    ): Unit = new AssetHandler( finder ).serve( asset, request, response )
 
     /** Returns the relative URL for an asset */
     def url ( path: String ): Option[String] = {
