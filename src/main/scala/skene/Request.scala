@@ -187,6 +187,7 @@ trait Request {
             Some( Request.dateFormat.parse( date ) )
         } catch {
             case _: ParseException => None
+            case _: NumberFormatException => None
         })
     }
 
