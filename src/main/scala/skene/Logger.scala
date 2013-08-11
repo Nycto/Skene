@@ -19,10 +19,11 @@ object Logger {
      */
     lazy val nil = new Logger {
         override def request ( req: Request ): Logger = this
-        override def response ( resp: Response ): Logger = this
+        override def response (
+            requestID: Long, status: Response.Code
+        ): Logger = this
         override def error ( err: Throwable ): Logger = this
     }
-
 }
 
 /**
@@ -41,8 +42,8 @@ class Logger ( private val logger: Slf4jLogger = Logger.internal ) {
     /**
      * Logs a skene response
      */
-    def response ( resp: Response ): Logger = {
-        logger.info( resp.toString )
+    def response ( requestID: Long, status: Response.Code ): Logger = {
+        logger.info( "[Response #%d %s]".format( requestID, status ) )
         this
     }
 

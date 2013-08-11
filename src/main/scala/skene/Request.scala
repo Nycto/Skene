@@ -73,12 +73,22 @@ object Request {
         format
     }
 
+    /**
+     * A running incrementor to generate request IDs
+     */
+    private[Request] val ids = new java.util.concurrent.atomic.AtomicLong(1)
+
 }
 
 /**
  * The data associated with a request
  */
 trait Request {
+
+    /**
+     * Returns the ID for this request
+     */
+    lazy val requestID: Long = Request.ids.getAndIncrement
 
     /**
      * The requested URL
@@ -177,7 +187,8 @@ trait Request {
     lazy val bodyParams = QueryString( body.mkString )
 
     /** {@inheritDoc} */
-    override def toString: String = "[Request %s %s]".format( method, url )
+    override def toString: String
+        = "[Request #%d %s %s]".format( requestID, method, url )
 
     /**
      * Returns a header as a date
