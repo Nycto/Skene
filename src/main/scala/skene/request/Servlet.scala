@@ -15,6 +15,9 @@ class ServletRequest (
 ) extends Request {
 
     /** {@inheritDoct} */
+    override lazy val requestID = Request.ids.getAndIncrement
+
+    /** {@inheritDoct} */
     override lazy val url = new URL( request.getRequestURL.toString )
 
     /** {@inheritDoct} */

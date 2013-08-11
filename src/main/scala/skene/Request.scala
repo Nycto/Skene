@@ -76,8 +76,7 @@ object Request {
     /**
      * A running incrementor to generate request IDs
      */
-    private[Request] val ids = new java.util.concurrent.atomic.AtomicLong(1)
-
+    private[skene] val ids = new java.util.concurrent.atomic.AtomicLong(1)
 }
 
 /**
@@ -88,7 +87,7 @@ trait Request {
     /**
      * Returns the ID for this request
      */
-    lazy val requestID: Long = Request.ids.getAndIncrement
+    def requestID: Long
 
     /**
      * The requested URL
@@ -242,7 +241,11 @@ class BareRequest (
     override val queryString: Option[String],
     override val cookies: CookieJar,
     override val isSecure: Boolean
-) extends Request
+) extends Request {
+
+    /** {@inheritDoct} */
+    override lazy val requestID = Request.ids.getAndIncrement
+}
 
 /**
  * A request that wraps another request and updates parts of it
@@ -251,6 +254,9 @@ abstract class RequestDecorator
     ( private val inner: Request )
     extends Request
 {
+    /** {@inheritDoc} */
+    override def requestID = inner.requestID
+
     /** {@inheritDoc} */
     override def url = inner.url
 

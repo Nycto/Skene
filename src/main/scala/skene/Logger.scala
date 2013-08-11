@@ -58,6 +58,14 @@ class Logger ( private val logger: Slf4jLogger = Logger.internal ) {
         this
     }
 
+    /**
+     * Logs an error message
+     */
+    def errorMsg ( requestID: Long, err: Throwable ): Logger = {
+        logger.error("[Request #%d Error: %s]".format(requestID, err.toString))
+        this
+    }
+
 }
 
 
