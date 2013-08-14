@@ -73,5 +73,14 @@ class URL private ( private val inner: JavaURL ) extends Equals {
         })
     }
 
+    /** Returns the subdomain of this URL */
+    def subdomain: Option[String] = {
+        host.split('.').dropRight(2).mkString(".") match {
+            case "" => None
+            case "www" => None
+            case sub => Some( sub )
+        }
+    }
+
 }
 

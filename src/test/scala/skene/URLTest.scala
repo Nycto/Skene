@@ -42,6 +42,14 @@ class URLTest extends Specification {
             URL("https://www.example.com:8080")
                 .host must_== "www.example.com"
         }
+
+        "return the subdomain of a host" in {
+            URL("https://example.com").subdomain must_== None
+            URL("https://www.example.com").subdomain must_== None
+            URL("https://one.example.com").subdomain must_== Some("one")
+            URL("https://one.two.example.com").subdomain must_==
+                Some("one.two")
+        }
     }
 
     "The path accessor of a URL" should {
