@@ -141,6 +141,13 @@ class Skene (
     /** Adds a handler that matches non-secure requests */
     lazy val notSecure: Fluent = new Fluent( Matcher.notSecure )
 
+    /** Adds a handler when the request has the given subdomain */
+    def subdomain( subdomain: String ): Fluent
+        = new Fluent( Matcher.subdomain(subdomain) )
+
+    /** Adds a handler when the request does not have a subdomain */
+    lazy val noSubdomain: Fluent = new Fluent( Matcher.noSubdomain )
+
     /** Sets up a default handler */
     def default ( handler: Handler ): Unit
         = dispatcher.set( _.default(handler) )

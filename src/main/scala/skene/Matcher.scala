@@ -75,6 +75,16 @@ object Matcher {
     def notSecure = new Secure( false )
 
     /**
+     * A matcher that compares the subdomain of a URL
+     */
+    def subdomain( subdomain: String ) = new Subdomain( Some(subdomain) )
+
+    /**
+     * A matcher that requires a subdomain doesn't exist
+     */
+    def noSubdomain = new Subdomain( None )
+
+    /**
      * Builds a matcher from a callback
      */
     def call ( call: (Request) => Matcher.Result ) = new Matcher {
