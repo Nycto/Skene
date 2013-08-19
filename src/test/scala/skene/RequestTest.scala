@@ -107,49 +107,5 @@ class RequestTest extends Specification {
         }
 
     }
-
-    "The Request.getDateHeader method" should {
-        val request = BareRequest ( headers = Map[String, String](
-            "valid" -> "Sun, 23 Jun 2013 15:24:35 PDT",
-            "invalid" -> "Some other string"
-        ))
-
-        "Return None with when the header isn't set" in {
-            request.getDateHeader("not set") must_== None
-        }
-
-        "Return None with when the header doesn't parse" in {
-            request.getDateHeader("invalid") must_== None
-        }
-
-        "Return a Date when the header is a date" in {
-            request.getDateHeader("valid") must_==
-                Some(new Date(1372026275000L))
-        }
-    }
-
-    "The Request.getContentType method" should {
-
-        "Return None with when the header isn't set" in {
-            request.getContentType must_== None
-        }
-
-        "Return the header when it is set" in {
-            val request = BareRequest ( headers = Map[String, String](
-                "Content-Type" -> "text/plain"
-            ))
-
-            request.getContentType must_== Some("text/plain")
-        }
-
-        "Return the header when it is set, excluding the encoding" in {
-            val request = BareRequest ( headers = Map[String, String](
-                "Content-Type" -> "text/plain; charset=UTF-8"
-            ))
-
-            request.getContentType must_== Some("text/plain")
-        }
-    }
-
 }
 

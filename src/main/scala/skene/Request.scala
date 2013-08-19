@@ -1,10 +1,7 @@
 package com.roundeights.skene
 
 import scala.io.Source
-
 import java.io.{InputStream, ByteArrayInputStream}
-import java.util.{Date, TimeZone}
-import java.text.{SimpleDateFormat, ParseException}
 
 /**
  * Request companion
@@ -65,15 +62,6 @@ object Request {
     }
 
     /**
-     * The date format for headers
-     */
-    private[skene] lazy val dateFormat = {
-        val format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
-        format.setTimeZone(TimeZone.getTimeZone("GMT"))
-        format
-    }
-
-    /**
      * A running incrementor to generate request IDs
      */
     private[skene] val ids = new java.util.concurrent.atomic.AtomicLong(1)
@@ -117,7 +105,7 @@ trait Request {
     /**
      * A map of request headers
      */
-    def headers: Map[String, String]
+    def headers: Headers
 
     /**
      * A container of cookies in this request
@@ -189,24 +177,6 @@ trait Request {
     override def toString: String
         = "[Request #%d %s %s]".format( requestID, method, url )
 
-    /**
-     * Returns a header as a date
-     */
-    def getDateHeader( header: String ): Option[Date] = {
-        headers.get( header ).flatMap( date => try {
-            Some( Request.dateFormat.parse( date ) )
-        } catch {
-            case _: ParseException => None
-            case _: NumberFormatException => None
-        })
-    }
-
-    /**
-     * Returns the content type of this request, if it was defined
-     */
-    def getContentType: Option[String]
-        = headers.get("Content-Type").map( _.takeWhile( _ != ';' ) )
-
 }
 
 /**
@@ -218,7 +188,7 @@ object BareRequest {
         params: Map[String, String] = Map(),
         method: Request.Method = Request.Method.GET(),
         body: String = "",
-        headers: Map[String, String] = Map(),
+        headers: Headers = Headers(),
         queryString: Option[String] = None,
         cookies: CookieJar = new CookieJar,
         isSecure: Boolean = false
@@ -237,7 +207,7 @@ class BareRequest (
     override val params: Map[String, String],
     override val method: Request.Method,
     override val bodyStream: InputStream,
-    override val headers: Map[String, String],
+    override val headers: Headers,
     override val queryString: Option[String],
     override val cookies: CookieJar,
     override val isSecure: Boolean

@@ -4,6 +4,9 @@ import scala.collection.convert.Wrappers.JEnumerationWrapper
 import javax.servlet.http.HttpServletRequest
 import scala.collection.immutable.TreeMap
 
+import java.util.{Date, TimeZone}
+import java.text.{SimpleDateFormat, ParseException}
+
 /** @see Headers */
 object Headers {
 
@@ -42,6 +45,13 @@ object Headers {
 
         new Headers( builder.result )
     }
+
+    /** The date format for headers */
+    private[skene] lazy val dateFormat = {
+        val format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
+        format.setTimeZone(TimeZone.getTimeZone("GMT"))
+        format
+    }
 }
 
 /**
@@ -55,10 +65,11 @@ class Headers private (
     def this() = this( TreeMap()(Headers.CaseInsensitiveOrdering) )
 
     /** Returns a specific header */
-    def get(key: String): Seq[String] = headers.get(key).getOrElse( Seq() )
+    def get(header: String): Seq[String]
+        = headers.get( header ).getOrElse( Seq() )
 
     /** Returns a single value for a specific header */
-    def apply(key: String): Option[String] = get(key).headOption
+    def apply(header: String): Option[String] = get(header).headOption
 
     /** {@inheritDoc} */
     override def iterator: Iterator[(String, Seq[String])] = headers.iterator
@@ -70,6 +81,20 @@ class Headers private (
     }
 
     /** Tests whether a header exists */
-    def contains(key: String): Boolean = headers.contains(key)
+    def contains(header: String): Boolean = headers.contains(header)
+
+    /** Returns a header as a date */
+    def getDate( header: String ): Option[Date] = {
+        apply( header ).flatMap( date => try {
+            Some( Headers.dateFormat.parse( date ) )
+        } catch {
+            case _: ParseException => None
+            case _: NumberFormatException => None
+        })
+    }
+
+    /** Returns the content type of this request, if it was defined */
+    def contentType: Option[String]
+        = apply("Content-Type").map( _.takeWhile( _ != ';' ) )
 }
 

@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import scala.io.Source
 import scala.collection.JavaConversions._
 
-import com.roundeights.skene.{URL, Request, Cookie, CookieJar}
+import com.roundeights.skene.{URL, Request, Cookie, CookieJar, Headers}
 
 /**
  * The specific request implementation for Jetty
@@ -37,11 +37,7 @@ class ServletRequest (
     }
 
     /** {@inheritDoct} */
-    override lazy val headers: Map[String, String] = {
-        request.getHeaderNames.foldLeft( Map[String, String]() ) {
-            (map, key) => map + (key -> request.getHeader(key))
-        }
-    }
+    override lazy val headers = Headers(request)
 
     /** {@inheritDoct} */
     override lazy val cookies
