@@ -96,5 +96,8 @@ class Headers private (
     /** Returns the content type of this request, if it was defined */
     def contentType: Option[String]
         = apply("Content-Type").map( _.takeWhile( _ != ';' ) )
+
+    /** Returns the if-modified-since date from the request */
+    def ifModifiedSince: Option[Date] = getDate("If-Modified-Since")
 }
 
