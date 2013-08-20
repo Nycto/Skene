@@ -99,5 +99,8 @@ class Headers private (
 
     /** Returns the if-modified-since date from the request */
     def ifModifiedSince: Option[Date] = getDate("If-Modified-Since")
+
+    /** Returns the authorization header from the request */
+    def authorization: Option[String] = apply("Authorization")
 }
 
