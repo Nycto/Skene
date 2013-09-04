@@ -77,6 +77,35 @@ class HeadersTest extends Specification {
         }
     }
 
+    "The Headers.basicAuth method" should {
+
+        "Return None with when the Auth header isn't set" in {
+            Headers().basicAuth must_== None
+        }
+
+        "Return the credentials when set" in {
+            Headers("Authorization" -> "Basic dXNlcjpwYXNz")
+                .basicAuth must_== Some( "user" -> "pass" )
+
+            Headers("Authorization" -> "  BASIC   dXNlcjpwYXNz  ")
+                .basicAuth must_== Some( "user" -> "pass" )
+        }
+
+        "Return None when the method isn't basic" in {
+            Headers("Authorization" -> "complex dXNlcjpwYXNz")
+                .basicAuth must_== None
+        }
+
+        "Return None when the encoded value dosnt have a colon" in {
+            Headers("Authorization" -> "Basic dXNlcnBhc3M=")
+                .basicAuth must_== None
+        }
+
+        "Return None when the value isnt base64 encoded" in {
+            Headers("Authorization" -> "Basic !@#$%").basicAuth must_== None
+        }
+    }
+
 }
 
 

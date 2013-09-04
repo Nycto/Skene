@@ -6,6 +6,7 @@ import scala.collection.immutable.TreeMap
 
 import java.util.{Date, TimeZone}
 import java.text.{SimpleDateFormat, ParseException}
+import javax.xml.bind.DatatypeConverter
 
 /** @see Headers */
 object Headers {
@@ -102,5 +103,19 @@ class Headers private (
 
     /** Returns the authorization header from the request */
     def authorization: Option[String] = apply("Authorization")
+
+    /** Returns the username and password for a basic auth header */
+    def basicAuth: Option[(String, String)] = {
+        authorization
+            .filter( _.trim.toLowerCase.startsWith("basic ") )
+            .map( _.trim.drop("basic ".length).trim )
+            .map( DatatypeConverter.parseBase64Binary _ )
+            .filter( _.length > 0 )
+            .map( bin => new String( bin, "UTF-8" ) )
+            .map( _.split(":", 2) )
+            .filter( _.length == 2 )
+            .map( parts => parts(0) -> parts(1) )
+    }
+
 }
 
