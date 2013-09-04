@@ -53,6 +53,9 @@ object Headers {
         format.setTimeZone(TimeZone.getTimeZone("GMT"))
         format
     }
+
+    /** Thrown when a header is invalid */
+    class InvalidHeader( message: String ) extends Exception( message )
 }
 
 /**
@@ -108,13 +111,23 @@ class Headers private (
     def basicAuth: Option[(String, String)] = {
         authorization
             .filter( _.trim.toLowerCase.startsWith("basic ") )
-            .map( _.trim.drop("basic ".length).trim )
-            .map( DatatypeConverter.parseBase64Binary _ )
-            .filter( _.length > 0 )
-            .map( bin => new String( bin, "UTF-8" ) )
-            .map( _.split(":", 2) )
-            .filter( _.length == 2 )
-            .map( parts => parts(0) -> parts(1) )
+            .map( header => {
+                val clean = header.trim.drop("basic ".length).trim
+
+                val decoded = DatatypeConverter.parseBase64Binary(clean)
+                if ( decoded.length == 0 ) {
+                    throw new Headers.InvalidHeader(
+                        "Basic Auth credentials could not be decoded")
+                }
+
+                val parts = new String( decoded, "UTF-8" ).split(":", 2)
+                if ( parts.length != 2 ) {
+                    throw new Headers.InvalidHeader(
+                        "Basic Auth credentials are missing a colon (:)")
+                }
+
+                parts(0) -> parts(1)
+            })
     }
 
 }

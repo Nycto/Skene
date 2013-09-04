@@ -96,13 +96,14 @@ class HeadersTest extends Specification {
                 .basicAuth must_== None
         }
 
-        "Return None when the encoded value dosnt have a colon" in {
+        "Throw when the encoded value dosnt have a colon" in {
             Headers("Authorization" -> "Basic dXNlcnBhc3M=")
-                .basicAuth must_== None
+                .basicAuth must throwA[Headers.InvalidHeader]
         }
 
-        "Return None when the value isnt base64 encoded" in {
-            Headers("Authorization" -> "Basic !@#$%").basicAuth must_== None
+        "Throw when the value isnt base64 encoded" in {
+            Headers("Authorization" -> "Basic !@#$%")
+                .basicAuth must throwA[Headers.InvalidHeader]
         }
     }
 
