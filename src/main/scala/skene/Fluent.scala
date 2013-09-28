@@ -33,6 +33,23 @@ trait Fluent {
             = when( matcher )( handler )
 
         /**
+         * Creates a fluent interface that will combine this matcher with
+         * another expression
+         */
+        private def combiner(
+            combine: (Matcher, Matcher) => Matcher
+        ): Fluent = {
+            val outerFluent = Fluent.this
+            val outerCtx = Fluent.this.context
+            val outerMatch = matcher
+            new Fluent {
+                override implicit protected val context = outerCtx
+                override def when (matcher: Matcher)(handler: Handler): Unit
+                    = outerFluent.when( combine(outerMatch, matcher) )(handler)
+            }
+        }
+
+        /**
          * Builds a new Fluent matcher that requires this matcher and another
          * to both pass
          */
@@ -40,11 +57,23 @@ trait Fluent {
             = new Finalize( Matcher.and(matcher, other.matcher) )
 
         /**
+         * Builds a new Fluent matcher that requires this matcher and another
+         * to both pass
+         */
+        def and: Fluent = combiner( Matcher.and(_, _) )
+
+        /**
          * Builds a new Fluent matcher that will match when either this
          * or another matcher pass
          */
         def or ( other: Finalize ): Finalize
             = new Finalize( Matcher.or(matcher, other.matcher) )
+
+        /**
+         * Builds a new Fluent matcher that will match when either this
+         * or another matcher pass
+         */
+        def or: Fluent = combiner( Matcher.or(_, _) )
     }
 
 

@@ -188,7 +188,7 @@ class FluentTest extends Specification with Mockito {
         "pass when both operands pass" in {
             val test = new AssertURL( BareRequest() )
             test.matches( new Skene {
-                when( true ).and( when( true ) ){ test.pass }
+                when( true ) and when( true ) apply { test.pass }
                 default { test.fail }
             } )
         }
@@ -196,8 +196,16 @@ class FluentTest extends Specification with Mockito {
         "be skipped when either operand fail" in {
             val test = new AssertURL( BareRequest() )
             test.matches( new Skene {
-                when( true ).and( when( false ) ){ test.fail }
+                when( true ) and when( false ) apply { test.fail }
                 default { test.pass }
+            } )
+        }
+
+        "allow for explicit dot notation" in {
+            val test = new AssertURL( BareRequest() )
+            test.matches( new Skene {
+                when( true ).and.when( true ) { test.pass }
+                default { test.fail }
             } )
         }
     }
@@ -207,7 +215,7 @@ class FluentTest extends Specification with Mockito {
         "pass when either operand pass" in {
             val test = new AssertURL( BareRequest() )
             test.matches( new Skene {
-                when( true ).or( when( false ) ){ test.pass }
+                when( true ) or when( false ) apply { test.pass }
                 default { test.fail }
             } )
         }
@@ -215,8 +223,16 @@ class FluentTest extends Specification with Mockito {
         "be skipped when both operands fail" in {
             val test = new AssertURL( BareRequest() )
             test.matches( new Skene {
-                when( false ).or( when( false ) ){ test.fail }
+                when( false ) or when( false ) apply { test.fail }
                 default { test.pass }
+            } )
+        }
+
+        "allow for explicit dot notation" in {
+            val test = new AssertURL( BareRequest() )
+            test.matches( new Skene {
+                when( false ).or.when( true ) { test.pass }
+                default { test.fail }
             } )
         }
     }
