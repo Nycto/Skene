@@ -40,8 +40,11 @@ class ServletRequest (
     override lazy val headers = Headers(request)
 
     /** {@inheritDoct} */
-    override lazy val cookies
-        = CookieJar( request.getCookies.map( cookie => Cookie(cookie) ):_* )
+    override lazy val cookies = request.getCookies match {
+        case null => CookieJar()
+        case Array() => CookieJar()
+        case raw => CookieJar( raw.map( cookie => Cookie(cookie) ):_* )
+    }
 
     /** {@inheritDoct} */
     override def isSecure = request.isSecure
