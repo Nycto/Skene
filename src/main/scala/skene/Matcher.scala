@@ -85,6 +85,11 @@ object Matcher {
     def noSubdomain = new Subdomain( None )
 
     /**
+     * Compares the full host name of the request
+     */
+    def host( host: String ) = new Host( host )
+
+    /**
      * Builds a matcher from a callback
      */
     def call ( call: (Request) => Matcher.Result ) = new Matcher {

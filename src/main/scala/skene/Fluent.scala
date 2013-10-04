@@ -128,6 +128,10 @@ trait Fluent {
     def subdomain( subdomain: String ): Finalize
         = new Finalize( Matcher.subdomain(subdomain) )
 
+    /** Adds a handler when the request has a given host name */
+    def host( hostname: String ): Finalize
+        = new Finalize( Matcher.host(hostname) )
+
     /** Adds a handler when the request does not have a subdomain */
     lazy val noSubdomain: Finalize = new Finalize( Matcher.noSubdomain )
 
