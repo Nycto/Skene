@@ -60,6 +60,11 @@ object Matcher {
     def or ( matcher: Matcher* ) = new Or( matcher.toList )
 
     /**
+     * A matcher passes when an internal matcher fails
+     */
+    def not ( matcher: Matcher ) = new Not( matcher )
+
+    /**
      * A matcher that looks at the HTTP Request method of a request
      */
     def method ( method: Request.Method ) = new Method( method )

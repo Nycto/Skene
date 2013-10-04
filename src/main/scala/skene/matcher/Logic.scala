@@ -8,9 +8,7 @@ import com.roundeights.skene.Request
  */
 class And ( private val matchers: List[Matcher] ) extends Matcher {
 
-    /**
-     * @see Matcher
-     */
+    /** {@inheritDoc} */
     override def matches ( request: Request ) = {
 
         // Recursively walks a list of matchers and joins their results,
@@ -31,11 +29,8 @@ class And ( private val matchers: List[Matcher] ) extends Matcher {
         walk( Matcher.Result(true), matchers )
     }
 
-    /**
-     * Create a readable description of this matcher
-     */
-    override def toString () = "[And: " + matchers.mkString(", ") + "]"
-
+    /** {@inheritDoc} */
+    override def toString = "[And: " + matchers.mkString(", ") + "]"
 }
 
 /**
@@ -43,9 +38,7 @@ class And ( private val matchers: List[Matcher] ) extends Matcher {
  */
 class Or ( private val matchers: List[Matcher] ) extends Matcher {
 
-    /**
-     * @see Matcher
-     */
+    /** {@inheritDoc} */
     override def matches ( request: Request ) = {
 
         // Recursively walks a list of matchers, short circuiting when
@@ -63,10 +56,20 @@ class Or ( private val matchers: List[Matcher] ) extends Matcher {
         walk( matchers )
     }
 
-    /**
-     * Create a readable description of this matcher
-     */
-    override def toString () = "[Or: " + matchers.mkString(", ") + "]"
+    /** {@inheritDoc} */
+    override def toString = "[Or: " + matchers.mkString(", ") + "]"
+}
 
+/**
+ * Asserts that an internal matcher doesn't match
+ */
+class Not ( private val matcher: Matcher ) extends Matcher {
+
+    /** {@inheritDoc} */
+    override def matches ( request: Request )
+        = Matcher.Result( !matcher.matches(request).passed )
+
+    /** {@inheritDoc} */
+    override def toString = "[Not: " + matcher + "]"
 }
 

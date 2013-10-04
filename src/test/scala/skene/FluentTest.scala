@@ -237,6 +237,33 @@ class FluentTest extends Specification with Mockito {
         }
     }
 
+    "The 'not' operator" should {
+
+        "pass when then inner operation fails" in {
+            val test = new AssertURL( BareRequest() )
+            test.matches( new Skene {
+                not( when(false) ) apply { test.pass }
+                default { test.fail }
+            } )
+        }
+
+        "be skipped when the inner operation passes" in {
+            val test = new AssertURL( BareRequest() )
+            test.matches( new Skene {
+                not( when(true) ) apply { test.fail }
+                default { test.pass }
+            } )
+        }
+
+        "allow for explicit dot notation" in {
+            val test = new AssertURL( BareRequest() )
+            test.matches( new Skene {
+                not.when(false) { test.pass }
+                default { test.fail }
+            } )
+        }
+    }
+
     "The 'delegate' method" should {
 
         "Hand the request to a nested interface" in {

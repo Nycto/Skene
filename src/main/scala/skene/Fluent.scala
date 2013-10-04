@@ -18,7 +18,7 @@ trait Fluent {
     def when ( matcher: Matcher )( handler: Handler ): Unit
 
     /** Attaches a matcher to a handler */
-    class Finalize ( private val matcher: Matcher ) {
+    class Finalize ( private[Fluent] val matcher: Matcher ) {
 
         def apply ( callback: (Recover, Request, Response) => Unit ): Unit
             = when( matcher )( Handler(callback) )
@@ -148,6 +148,21 @@ trait Fluent {
     /** Uses a custom thunk as a matcher */
     def when ( callback: => Boolean ): Finalize
         = new Finalize( Matcher.call { Matcher.Result( callback ) } )
+
+    /** Inverts the results of another matcher */
+    def not( other: Finalize ): Finalize
+        = new Finalize( Matcher.not(other.matcher) )
+
+    /** Inverts the results of another matcher */
+    def not: Fluent = {
+        val outerFluent = Fluent.this
+        val outerCtx = Fluent.this.context
+        new Fluent {
+            override implicit protected val context = outerCtx
+            override def when (matcher: Matcher)(handler: Handler): Unit
+                = outerFluent.when( Matcher.not(matcher) )(handler)
+        }
+    }
 }
 
 

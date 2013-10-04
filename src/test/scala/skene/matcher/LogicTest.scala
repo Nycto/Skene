@@ -85,5 +85,18 @@ class LogicTest extends Specification {
 
     }
 
+    "A Not matcher" should {
+
+        "fail when the inner matcher passes" in {
+            Matcher.not( Matcher.always ).matches(request) must_==
+                Matcher.Result(false)
+        }
+
+        "pass when the inner matcher fails" in {
+            Matcher.not( Matcher.never ).matches(request) must_==
+                Matcher.Result(true)
+        }
+    }
+
 }
 
