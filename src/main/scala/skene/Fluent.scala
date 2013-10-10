@@ -114,23 +114,23 @@ trait Fluent {
 
     /** Adds a handler for GET requests to the given path */
     def get ( path: String ): Finalize
-        = when(Matcher.and(Matcher.method(Method.GET()), Matcher.path(path)))
+        = when( Matcher.method(Method.GET()) and Matcher.path(path) )
 
     /** Adds a handler for POST requests to the given path */
     def post ( path: String ): Finalize
-        = when(Matcher.and(Matcher.method(Method.POST()), Matcher.path(path)))
+        = when( Matcher.method(Method.POST()) and Matcher.path(path) )
 
     /** Adds a handler for DELETE requests to the given path */
     def delete ( path: String ): Finalize
-        = when(Matcher.and(Matcher.method(Method.DELETE()), Matcher.path(path)))
+        = when( Matcher.method(Method.DELETE()) and Matcher.path(path) )
 
     /** Adds a handler for PUT requests to the given path */
     def put ( path: String ): Finalize
-        = when(Matcher.and(Matcher.method(Method.PUT()), Matcher.path(path)))
+        = when( Matcher.method(Method.PUT()) and Matcher.path(path) )
 
     /** Adds a handler for PATCH requests to the given path */
     def patch ( path: String ): Finalize
-        = when(Matcher.and(Matcher.method(Method.PATCH()), Matcher.path(path)))
+        = when( Matcher.method(Method.PATCH()) and Matcher.path(path) )
 
     /** Adds a handler that matches secure requests */
     lazy val isSecure: Finalize = when( Matcher.isSecure )

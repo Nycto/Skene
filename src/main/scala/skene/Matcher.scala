@@ -113,9 +113,8 @@ object Matcher {
  * A construct for matching patterns against a request
  */
 trait Matcher {
-    /**
-     * Returns whether a given request matches
-     */
+
+    /** Returns whether a given request matches */
     def matches ( request: Request ): Matcher.Result
 
     /** Joins this matcher with a Handler */
@@ -139,6 +138,12 @@ trait Matcher {
                 = "Matcher/Handler(%s, %s)".format(self, handler)
         }
     }
+
+    /** Joins this matcher with another using an 'and' relationship */
+    def and ( matcher: Matcher ) = Matcher.and( this, matcher )
+
+    /** Joins this matcher with another using an 'and' relationship */
+    def or ( matcher: Matcher ) = Matcher.or( this, matcher )
 
 }
 
