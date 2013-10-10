@@ -10,29 +10,22 @@ class Always (
     private val params: Map[String,String] = Map()
 ) extends Matcher {
 
-    /**
-     * @see Matcher
-     */
+    /** {@inheritDoc} */
     override def matches ( request: Request ) = Matcher.Result(true, params)
 
-    /**
-     * Create a readable description of this matcher
-     */
-    override def toString () = "[Always Matcher]"
+    /** {@inheritDoc} */
+    override def toString () = "(Always)"
 }
 
 /**
  * A matcher that never passes
  */
 class Never extends Matcher {
-    /**
-     * @see Matcher
-     */
+
+    /** {@inheritDoc} */
     override def matches ( request: Request ) = Matcher.Result(false)
 
-    /**
-     * Create a readable description of this matcher
-     */
-    override def toString () = "[Never Matcher]"
+    /** {@inheritDoc} */
+    override def toString () = "(Never)"
 }
 

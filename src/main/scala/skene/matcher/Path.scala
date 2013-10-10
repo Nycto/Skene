@@ -14,28 +14,19 @@ case class ScannerBundle(
     val params: Map[String, String] = Map()
 ) {
 
-    /**
-     * Creates a new bundle based on this one with the given path.
-     */
+    /** Creates a new bundle based on this one with the given path. */
     def path ( path: String ) = ScannerBundle( path, index, params )
 
-    /**
-     * Drops a number of characters from the left hand side of the path
-     */
+    /** Drops a number of characters from the left hand side of the path */
     def drop ( count: Int )
         = ScannerBundle( path.drop(count), index, params )
 
-    /**
-     * Copies this bundle and increments the index.
-     */
+    /** Copies this bundle and increments the index. */
     def inc = ScannerBundle(path, index + 1, params)
 
-    /**
-     * Adds a parameter to this bundle
-     */
+    /** Adds a parameter to this bundle */
     def add ( param: (String, String) )
         = ScannerBundle(path, index, params + param )
-
 }
 
 
@@ -54,7 +45,6 @@ private trait PathScanner {
      * Scans the given path to determine if it matches this configuration.
      */
     def apply ( path: String ): Matcher.Result = apply( ScannerBundle(path) )
-
 }
 
 /**
@@ -72,8 +62,7 @@ private case class TerminusScanner () extends PathScanner {
     }
 
     /** {@inheritDoc} */
-    override def toString = "[Terminus]"
-
+    override def toString = "($)"
 }
 
 /**
@@ -93,8 +82,7 @@ private case class CompareScanner (
     }
 
     /** {@inheritDoc} */
-    override def toString = "[Compare = '" + versus + "'] -> " + next
-
+    override def toString = "(" + versus + ") " + next
 }
 
 /**
@@ -103,20 +91,15 @@ private case class CompareScanner (
 private object Glob {
 
     /**
-     * A scanner that ungreedily consumes any characters it can
+     * A scanner that consumes any characters it can
      */
     abstract class Config {
 
-        /**
-         * Returns the key to use for the given bundle info
-         */
+        /** Returns the key to use for the given bundle info */
         def key ( bundle: ScannerBundle ): String
 
-        /**
-         * Returns a string representation of this config
-         */
+        /** Produces a readable version of this config */
         def toString ( until: Char ): String
-
     }
 
     /**
@@ -129,8 +112,7 @@ private object Glob {
 
         /** {@inheritDoc} */
         override def toString( until: Char )
-            = "Glob :%s @%s".format(name, until)
-
+            = "Glob :%s until '%s'".format(name, until)
     }
 
     /**
@@ -142,15 +124,8 @@ private object Glob {
         override def key ( bundle: ScannerBundle ) = bundle.index.toString
 
         /** {@inheritDoc} */
-        override def toString( until: Char ) = "Glob @" + until
-
+        override def toString( until: Char ) = "Glob until '%s'".format(until)
     }
-
-    /**
-     * The signature for callbacks that can be used to scan a path
-     */
-    type Greediness
-        = ( PathScanner, Char, String, ScannerBundle ) => Matcher.Result
 
     /**
      * A non-greedy glob path scanner
@@ -213,7 +188,7 @@ private object Glob {
     }
 
     /**
-     * A non-greedy glob path scanner
+     * A glob path scanner
      */
     class Scanner (
         private val until: Char,
@@ -222,9 +197,7 @@ private object Glob {
         private val next: PathScanner
     ) extends PathScanner {
 
-        /**
-         * The partially applied scan callback
-         */
+        /** The partially applied scan callback */
         private val scan = {
             if ( greedy ) Greedy(next, until, _:String, _:ScannerBundle)
             else Ungreedy(next, until, _:String, _:ScannerBundle)
@@ -235,14 +208,12 @@ private object Glob {
             = scan( config.key(bundle), bundle )
 
         /** {@inheritDoc} */
-        override def toString = "[%s%s] -> %s".format(
+        override def toString = "(%s%s) %s".format(
             if ( greedy ) "Greedy " else "",
             config.toString(until),
             next
         )
-
     }
-
 }
 
 /**
@@ -250,9 +221,7 @@ private object Glob {
  */
 private object PathScanner {
 
-    /**
-     * A helper method for building the wildcard portion of a scanner
-     */
+    /** A helper method for building the wildcard portion of a scanner */
     private def buildGlob (
         pos: Int, pattern: String, parent: PathScanner, greedy: Boolean
     ): PathScanner = {
@@ -277,9 +246,7 @@ private object PathScanner {
         }
     }
 
-    /**
-     * A helper method for building a named wildcard scanner
-     */
+    /** A helper method for building a named wildcard scanner */
     private def buildNamed (
         pos: Int, pattern: String, parent: PathScanner, greedy: Boolean
     ): PathScanner = {
@@ -328,7 +295,7 @@ private object PathScanner {
     }
 
     /**
-     * A helper method that builds a chain of path scanners from a pattern
+     * Builds a chain of path scanners from a pattern
      *
      * This works by scanning the string from right to left and looking for
      * key characters. It then recursively constructs a chain of scanners
@@ -375,12 +342,9 @@ private object PathScanner {
         }
     }
 
-    /**
-     * Builds a scanner from a string pattern
-     */
+    /** Builds a scanner from a string pattern */
     def apply ( pattern: String ): PathScanner
         = buildScanner( pattern, TerminusScanner() )
-
 }
 
 /**
@@ -388,25 +352,17 @@ private object PathScanner {
  */
 class Path ( path: String ) extends Matcher {
 
-    /**
-     * The path being compared against
-     */
+    /** The path being compared against */
     private val versus = if ( path.startsWith("/") ) path else "/" + path
 
-    /**
-     * A list of matcher functions
-     */
+    /** A list of matcher functions */
     private val scanner = PathScanner( versus )
 
-    /**
-     * @see Matcher
-     */
+    /** {@inheritDoc} */
     override def matches ( request: Request )
         = scanner( request.url.path.getOrElse("/") )
 
-    /**
-     * Create a readable description of this matcher
-     */
-    override def toString () = "[Path Matcher: " + scanner + "]"
+    /** {@inheritDoc} */
+    override def toString () = "(Path " + scanner + ")"
 }
 

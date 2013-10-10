@@ -13,7 +13,7 @@ class Secure ( private val secure: Boolean = true ) extends Matcher {
         = Matcher.Result( request.isSecure == secure )
 
     /** {@inheritDoc} */
-    override def toString = "[IsSecure: " + secure + "]"
+    override def toString = "(Secure " + secure + ")"
 }
 
 

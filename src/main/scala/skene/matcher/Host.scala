@@ -22,7 +22,7 @@ class Host ( host: String ) extends Matcher {
         = Matcher.Result( normalize(request.url.host) == hostname )
 
     /** {@inheritDoc} */
-    override def toString = "[Host: " + hostname + "]"
+    override def toString = "(Host " + hostname + ")"
 }
 
 

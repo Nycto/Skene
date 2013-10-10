@@ -20,7 +20,7 @@ class Subdomain ( subdomain: Option[String] ) extends Matcher {
         = Matcher.Result( request.url.subdomain.map( _.toLowerCase ) == sub )
 
     /** {@inheritDoc} */
-    override def toString = "[Subdomain: " + sub + "]"
+    override def toString = "(Subdomain " + sub + ")"
 }
 
 

@@ -30,7 +30,7 @@ class And ( private val matchers: List[Matcher] ) extends Matcher {
     }
 
     /** {@inheritDoc} */
-    override def toString = "[And: " + matchers.mkString(", ") + "]"
+    override def toString = "(And " + matchers.mkString(" ") + ")"
 }
 
 /**
@@ -57,7 +57,7 @@ class Or ( private val matchers: List[Matcher] ) extends Matcher {
     }
 
     /** {@inheritDoc} */
-    override def toString = "[Or: " + matchers.mkString(", ") + "]"
+    override def toString = "(Or " + matchers.mkString(" ") + ")"
 }
 
 /**
@@ -70,6 +70,6 @@ class Not ( private val matcher: Matcher ) extends Matcher {
         = Matcher.Result( !matcher.matches(request).passed )
 
     /** {@inheritDoc} */
-    override def toString = "[Not: " + matcher + "]"
+    override def toString = "(Not " + matcher + ")"
 }
 
