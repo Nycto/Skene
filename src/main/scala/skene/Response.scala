@@ -275,6 +275,11 @@ trait Response {
     def unauthorized = code( Response.Code.Unauthorized() )
 
     /**
+     * Sends a 403 forbidden code
+     */
+    def forbidden = code( Response.Code.Forbidden() )
+
+    /**
      * Sends a 404 Not Found code
      */
     def notFound = code( Response.Code.NotFound() )
