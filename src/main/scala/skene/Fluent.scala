@@ -112,6 +112,9 @@ trait Fluent {
     /** Applies a handler for PATCH requests */
     lazy val isPatch: Finalize = method( Method.PATCH() )
 
+    /** Applies a handler for HEAD requests */
+    lazy val isHead: Finalize = method( Method.HEAD() )
+
     /** Adds a handler for GET requests to the given path */
     def get ( path: String ): Finalize
         = when( Matcher.method(Method.GET()) and Matcher.path(path) )
@@ -131,6 +134,10 @@ trait Fluent {
     /** Adds a handler for PATCH requests to the given path */
     def patch ( path: String ): Finalize
         = when( Matcher.method(Method.PATCH()) and Matcher.path(path) )
+
+    /** Adds a handler for HEAD requests to the given path */
+    def head ( path: String ): Finalize
+        = when( Matcher.method(Method.HEAD()) and Matcher.path(path) )
 
     /** Adds a handler that matches secure requests */
     lazy val isSecure: Finalize = when( Matcher.isSecure )
