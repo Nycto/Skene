@@ -4,14 +4,14 @@ organization := "com.roundeights"
 
 version := "0.1"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.3"
 
 // append -deprecation to the options passed to the Scala compiler
 scalacOptions ++= Seq("-deprecation", "-feature")
 
 // Application dependencies
 libraryDependencies ++= Seq(
-    "org.scala-lang" % "scala-actors" % "2.10.2",
+    "org.scala-lang" % "scala-actors" % "2.10.3",
     "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
     "org.slf4j" % "slf4j-simple" % "1.7.2",
     "org.specs2" %% "specs2" % "1.13" % "test",
