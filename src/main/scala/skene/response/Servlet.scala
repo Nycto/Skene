@@ -5,7 +5,7 @@ import scala.actors.Actor
 import scala.collection.mutable.MutableList
 import java.util.concurrent.atomic.AtomicReference
 
-import javax.servlet.http.HttpServletResponse
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.servlet.AsyncContext
 
 import com.roundeights.skene.{Response, Renderable, Recover, Cookie, Logger}
@@ -15,6 +15,7 @@ import com.roundeights.skene.{Response, Renderable, Recover, Cookie, Logger}
  */
 class ServletResponse (
     async: AsyncContext,
+    request: HttpServletRequest,
     response: HttpServletResponse,
     logger: Logger,
     requestID: Long
@@ -33,9 +34,11 @@ class ServletResponse (
         val stream = response.getOutputStream
 
         def flush (): Unit = {
-            data.map( _.render( stream, Codec.UTF8 ) )
-            data.clear()
-            stream.flush()
+            if ( data.length > 0 ) {
+                data.map( _.render( stream, Codec.UTF8 ) )
+                data.clear()
+                stream.flush()
+            }
         }
 
         Actor.loop {
@@ -48,7 +51,8 @@ class ServletResponse (
                     responseCode.set( code )
                 }
 
-                case content: Renderable => data += content
+                case content: Renderable if request.getMethod != "HEAD"
+                    => data += content
 
                 case cookie: Cookie => response.addCookie(cookie.toJavaCookie)
 

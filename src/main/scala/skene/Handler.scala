@@ -87,7 +87,7 @@ abstract class Handler (
 
         val wrappedReq = new ServletRequest( request )
         val wrappedResp = new ServletResponse(
-            async, response, logger, wrappedReq.requestID
+            async, request, response, logger, wrappedReq.requestID
         ).isHtml
 
         val recover = Recover.errorAndLog( wrappedResp, logger )
