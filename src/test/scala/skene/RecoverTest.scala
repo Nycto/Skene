@@ -234,6 +234,34 @@ class RecoverTest extends Specification with Mockito {
             there was no(runnable).run
         }
 
+        "Provide a PartialFunction that will match all throwables" in {
+            val (runnable, recover) = mockRecover
+            recover.matchAll( err )
+            there was one(runnable).run
+        }
+
+        "Allow a PartialFunction to be built that will handle exceptions" in {
+            val (runnable, recover) = mockRecover
+
+            val matcher = recover.matcher {
+                case _: IllegalArgumentException => err
+            }
+
+            matcher( new IllegalArgumentException )
+            there was one(runnable).run
+        }
+
+        "Pass through the error when a PartialFunction doesn't match" in {
+            val (runnable, recover) = mockRecover
+
+            val matcher = recover.matcher {
+                case _: IllegalArgumentException => err
+            }
+
+            matcher( err )
+            there was one(runnable).run
+        }
+
     }
 
 }

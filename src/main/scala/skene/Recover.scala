@@ -133,5 +133,20 @@ class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
         case err: Throwable => recover.orRethrow( err )
     }
 
+    /** Returns a pattern matcher that will call this instance */
+    def matchAll: PartialFunction[Throwable, Unit] = {
+        case err: Throwable => orRethrow(err)
+    }
+
+    /** Returns a pattern matcher that will call this instance */
+    def matcher (
+        cases: PartialFunction[Throwable, Throwable]
+    ): PartialFunction[Throwable, Unit] = {
+        case err: Throwable => orRethrow(
+            if ( cases.isDefinedAt(err) ) cases(err)
+            else err
+        )
+    }
+
 }
 
