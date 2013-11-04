@@ -31,25 +31,19 @@ object Logger {
  */
 class Logger ( private val logger: Slf4jLogger = Logger.internal ) {
 
-    /**
-     * Logs a skene request
-     */
+    /** Logs a skene request */
     def request ( req: Request ): Logger = {
         logger.info( req.toString )
         this
     }
 
-    /**
-     * Logs a skene response
-     */
+    /** Logs a skene response */
     def response ( requestID: Long, status: Response.Code ): Logger = {
         logger.info( "[Response #%d %s]".format( requestID, status ) )
         this
     }
 
-    /**
-     * Logs an exception
-     */
+    /** Logs an exception */
     def error ( err: Throwable ): Logger = {
         logger.error(List(
             err.toString,
@@ -58,11 +52,17 @@ class Logger ( private val logger: Slf4jLogger = Logger.internal ) {
         this
     }
 
-    /**
-     * Logs an error message
-     */
-    def errorMsg ( requestID: Long, err: Throwable ): Logger = {
-        logger.error("[Request #%d Error: %s]".format(requestID, err.toString))
+    /** Logs an error message against a specific request */
+    def errorMsg ( request: Request, err: Throwable ): Logger = {
+        logger.error("[Request #%d Error: %s]".format(
+            request.requestID, err.toString))
+        this
+    }
+
+    /** Logs a warning against a specific request */
+    def warnMsg ( request: Request, err: Throwable ): Logger = {
+        logger.warn("[Request #%d Warning: %s]".format(
+            request.requestID, err.toString))
         this
     }
 
