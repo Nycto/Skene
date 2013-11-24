@@ -17,8 +17,7 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-actors" % "2.10.3",
     "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
-    "org.slf4j" % "slf4j-simple" % "1.7.2",
-    "org.specs2" %% "specs2" % "1.13" % "test",
-    "org.mockito" % "mockito-all" % "1.9.5" % "test"
+    "org.slf4j" % "slf4j-simple" % "1.7.5",
+    "org.specs2" %% "specs2" % "2.3.4" % "test"
 )
 
