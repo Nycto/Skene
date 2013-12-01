@@ -45,6 +45,16 @@ case class Cookie (
     /** Deletes this cookie */
     def delete = Cookie(name, value, Some(0), domain, path, secure, httpOnly)
 
+    /** Modifies values of this cookie */
+    def set (
+        name: String = this.name,
+        value: String = this.value,
+        ttl: Option[Int] = this.ttl,
+        domain: Option[String] = this.domain,
+        path: Option[String] = this.path,
+        secure: Boolean = this.secure,
+        httpOnly: Boolean = this.httpOnly
+    ) = Cookie( name, value, ttl, domain, path, secure, httpOnly )
 }
 
 /**
