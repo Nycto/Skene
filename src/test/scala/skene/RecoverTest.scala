@@ -262,6 +262,30 @@ class RecoverTest extends Specification with Mockito {
             there was one(runnable).run
         }
 
+        "allow 'using' to define an easy fallback" in {
+            val (runnable, recover) = mockRecover
+
+            recover.using {
+                case thrown: ClassNotFoundException => thrown must_== err
+            } from {
+                throw err
+            }
+
+            there was no(runnable).run
+        }
+
+        "Fall back from 'using' when the error doesn't match" in {
+            val (runnable, recover) = mockRecover
+
+            recover.using {
+                case thrown: IllegalArgumentException => ()
+            } from {
+                throw err
+            }
+
+            there was one(runnable).run
+        }
+
     }
 
 }

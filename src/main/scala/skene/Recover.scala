@@ -24,7 +24,6 @@ object Recover {
             ).done
         }
     }
-
 }
 
 /**
@@ -148,5 +147,8 @@ class Recover ( private val action: PartialFunction[Throwable, Unit] ) {
         )
     }
 
+    /** Builds a new Recover instance from a callback */
+    def using ( action: PartialFunction[Throwable, Unit] ): Recover
+        = ( new Recover(action) ).orFallBackTo( this )
 }
 
