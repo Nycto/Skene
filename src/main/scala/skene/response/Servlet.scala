@@ -4,6 +4,7 @@ import scala.io.Codec
 import scala.actors.Actor
 import scala.collection.mutable.MutableList
 import java.util.concurrent.atomic.AtomicReference
+import java.util.zip.GZIPOutputStream
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.servlet.AsyncContext
@@ -25,15 +26,27 @@ class ServletResponse (
     private val responseCode
         = new AtomicReference[Response.Code]( Response.Code.OK() )
 
-    /**
-     * An actor this is used to communicate with the Servlet Response
-     */
+    /** Whether this request supports gzip encoding */
+    private lazy val gzip = request.getHeader("Accept-Encoding") match {
+        case null => false
+        case accept => accept.toLowerCase.contains("gzip")
+    }
+
+    /** The output stream for this response */
+    private lazy val stream = gzip match {
+        case true => {
+            response.setHeader("Content-Encoding", "gzip")
+            new GZIPOutputStream( response.getOutputStream )
+        }
+        case false => response.getOutputStream
+    }
+
+    /** An actor this is used to communicate with the Servlet Response */
     protected val actor: Actor = Actor.actor {
 
         val data = MutableList[Renderable]()
-        val stream = response.getOutputStream
 
-        def flush (): Unit = {
+        def flush(): Unit = {
             if ( data.length > 0 ) {
                 data.map( _.render( stream, Codec.UTF8 ) )
                 data.clear()
