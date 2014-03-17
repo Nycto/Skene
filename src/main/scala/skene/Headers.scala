@@ -56,6 +56,60 @@ object Headers {
 
     /** Thrown when a header is invalid */
     class InvalidHeader( message: String ) extends Exception( message )
+
+    /**
+     * Parses the Accept header per
+     * http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+     */
+    class Accept ( val raw: String ) {
+
+        /** Splits a list of params into tuples */
+        private def parseParams(
+            parts: List[String]
+        ): List[(String, String)] = {
+            parts.foldRight(
+                List[(String, String)]()
+            )( (chunk, accum) => chunk.split("=", 2).toList match {
+                case key :: Nil => ( key.trim -> "" ) :: accum
+                case key :: value :: Nil if key.trim.length > 0
+                    => ( key.trim -> value ) :: accum
+                case _ => accum
+            })
+        }
+
+        /** The list of content types and their parameters */
+        val params: Map[String, List[(String, String)]] = {
+            raw.split(",").foldLeft(
+                Map[String, List[(String, String)]]()
+            )( (accum, part) => {
+                part.split(";").toList match {
+                    case mime :: _ if mime.trim.length == 0 => accum
+                    case mime :: tail =>
+                        accum + ( mime.trim.toLowerCase -> parseParams(tail) )
+                }
+            })
+        }
+
+        /** Returns the list of mime types */
+        lazy val contentTypes: Set[String] = params.keys.toSet
+
+        /** Returns whether a content type is accepted */
+        def apply ( contentType: String ): Boolean
+            = contentTypes.contains( contentType.toLowerCase )
+
+        /** {@inheritDoc} */
+        override def toString = params.keys.toList.sorted.map( mime => {
+            params(mime) match {
+                case Nil => mime
+                case pieces => "%s; %s".format(
+                    mime,
+                    pieces.map(pair => "%s=%s".format(pair._1, pair._2) )
+                        .sorted
+                        .mkString("; ")
+                )
+            }
+        }).mkString(", ")
+    }
 }
 
 /**
@@ -130,5 +184,7 @@ class Headers private (
             })
     }
 
+    /** Parsed interpretation of the Accept header */
+    lazy val accept = new Headers.Accept( apply("Accept").getOrElse("*/*") )
 }
 
