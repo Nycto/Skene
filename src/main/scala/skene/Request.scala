@@ -2,6 +2,7 @@ package com.roundeights.skene
 
 import scala.io.Source
 import java.io.{InputStream, ByteArrayInputStream}
+import java.net.InetAddress
 
 /**
  * Request companion
@@ -118,6 +119,11 @@ trait Request {
     def isSecure: Boolean
 
     /**
+     * The IP address of the request
+     */
+    def ip: InetAddress
+
+    /**
      * Returns a Source iterator over the body of this request.
      */
     def body: Source = Source.fromInputStream( bodyStream )
@@ -191,11 +197,12 @@ object BareRequest {
         headers: Headers = Headers(),
         queryString: Option[String] = None,
         cookies: CookieJar = new CookieJar,
-        isSecure: Boolean = false
+        isSecure: Boolean = false,
+        ip: InetAddress = InetAddress.getByAddress(Array[Byte](127,0,0,1))
     ) = new BareRequest(
         url, params, method,
         new ByteArrayInputStream( body.getBytes ),
-        headers, queryString, cookies, isSecure
+        headers, queryString, cookies, isSecure, ip
     )
 }
 
@@ -210,7 +217,8 @@ class BareRequest (
     override val headers: Headers,
     override val queryString: Option[String],
     override val cookies: CookieJar,
-    override val isSecure: Boolean
+    override val isSecure: Boolean,
+    override val ip: InetAddress
 ) extends Request {
 
     /** {@inheritDoct} */
@@ -250,6 +258,9 @@ abstract class RequestDecorator
 
     /** {@inheritDoc} */
     override def isSecure = inner.isSecure
+
+    /** {@inheritDoc} */
+    override def ip = inner.ip
 }
 
 /**

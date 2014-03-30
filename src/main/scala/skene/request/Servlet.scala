@@ -1,6 +1,7 @@
 package com.roundeights.skene.request
 
 import javax.servlet.http.HttpServletRequest
+import java.net.InetAddress
 
 import scala.io.Source
 import scala.collection.JavaConversions._
@@ -49,6 +50,8 @@ class ServletRequest (
     /** {@inheritDoct} */
     override def isSecure = request.isSecure
 
+    /** {@inheritDoct} */
+    override lazy val ip = InetAddress.getByName( request.getRemoteAddr )
 }
 
 
