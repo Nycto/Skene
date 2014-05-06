@@ -71,18 +71,35 @@ class Graph[T] private[skene] (
         promise.future
     }
 
-    /**
-     * Builds a Request Handler that will be given a fully formed bundle
-     */
+    /** Builds a Request Handler that will be given a fully formed bundle */
     def in ( action: (T, Response) => Unit ): Handler
         = new PrereqHandler[T]( this, action )
 
-    /**
-     * Builds a Request Handler that will be given a fully formed bundle
-     */
+    /** Builds a Request Handler that will be given a fully formed bundle */
     def in ( action: (T, Response, Recover) => Unit ): Handler
         = new PrereqHandler[T]( this, action )
 
+    /** An interface for using this Graph in a for comprehension */
+    class ForComprehension[I] (
+        transform: (T, Response, Recover) => I
+    ) {
+
+        /** Generates a handler from a callback */
+        def map[O] ( decorator: (I) => O ) = new ForComprehension[O](
+            (reqs, resp, rec) => decorator( transform(reqs, resp, rec) )
+        )
+
+        /** Generates a handler from a callback */
+        def foreach ( action: (I) => Unit ): Handler
+            = in( (reqs, resp, rec) => action( transform(reqs, resp, rec) ) )
+    }
+
+    /** Returns an interface for using this graph in a for comprehension */
+    def withFilter (
+        predicate: (Tuple3[T, Response, Recover]) => Boolean
+    ) = new ForComprehension[Tuple3[T, Response, Recover]](
+        (reqs, resp, rec) => Tuple3(reqs, resp, rec)
+    )
 }
 
 

@@ -20,6 +20,7 @@ class GraphTest extends Specification with Mockito {
 
     val req = mock[Request]
     val resp = mock[Response]
+    val recover = mock[Recover]
 
     trait Req1 { def one: String }
     trait Req2 { def two: String }
@@ -94,6 +95,43 @@ class GraphTest extends Specification with Mockito {
                 .register[Req1]( (result: Promise[Req1]) => throw err )
 
             await( registry.use[Req1].build(req, resp).failed ) must_== err
+        }
+
+    }
+
+    "A Registry used in for comprehensions" should {
+
+        val registry = new Registry()
+            .register[Req1](
+                (bundle: Bundle, result: Promise[Req1]) => {
+                    result.success( new Req1{ val one = "1" } )
+                }
+            )
+
+        "support a simple foreach" in {
+
+            val promise = Promise[String]()
+
+            var handler = for {
+                (reqs, _, _) <- registry.use[Req1]
+            } promise.success( reqs.one )
+
+            handler.handle( recover, req, resp )
+            await( promise.future ) must_== "1"
+        }
+
+        "Allow assignments" in {
+
+            val promise = Promise[String]()
+
+            var handler = for {
+                (reqs, _, _) <- registry.use[Req1]
+                delim = ": "
+                label = "Number"
+            } promise.success( label + delim + reqs.one )
+
+            handler.handle( recover, req, resp )
+            await( promise.future ) must_== "Number: 1"
         }
 
     }
