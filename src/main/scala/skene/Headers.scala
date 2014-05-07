@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest
 import scala.collection.immutable.TreeMap
 
 import java.util.{Date, TimeZone}
-import java.text.{SimpleDateFormat, ParseException}
+import java.text.{DateFormat, SimpleDateFormat, ParseException}
 import javax.xml.bind.DatatypeConverter
 
 /** @see Headers */
@@ -48,11 +48,13 @@ object Headers {
     }
 
     /** The date format for headers */
-    private[skene] lazy val dateFormat = {
-        val format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
-        format.setTimeZone(TimeZone.getTimeZone("GMT"))
-        format
-    }
+    private[skene] val dateFormat = new ThreadLocal[DateFormat]() {
+        override protected def initialValue(): DateFormat = {
+            val format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz")
+            format.setTimeZone( TimeZone.getTimeZone("GMT") )
+            format
+        }
+    };
 
     /** Thrown when a header is invalid */
     class InvalidHeader( message: String ) extends Exception( message )
@@ -144,7 +146,7 @@ class Headers private (
     /** Returns a header as a date */
     def getDate( header: String ): Option[Date] = {
         apply( header ).flatMap( date => try {
-            Some( Headers.dateFormat.parse( date ) )
+            Some( Headers.dateFormat.get.parse( date ) )
         } catch {
             case _: ParseException => None
             case _: NumberFormatException => None

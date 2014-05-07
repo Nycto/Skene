@@ -189,8 +189,9 @@ trait Response {
     /**
      * Sets a date based header in this response
      */
-    def header( field: Response.HeaderField, value: Date ): Response
-        = header( Response.Header( field, Headers.dateFormat.format(value) ) )
+    def header( field: Response.HeaderField, value: Date ): Response = header(
+        Response.Header( field, Headers.dateFormat.get.format(value) )
+    )
 
     /**
      * Sends a location header
