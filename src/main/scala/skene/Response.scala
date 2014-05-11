@@ -10,44 +10,47 @@ import java.util.Date
 object Response {
 
     /**
-     * An HTTP Response code
-     */
-    sealed abstract class Code ( val code: Int ) {
-        assert( code >= 100 )
-        assert( code < 600 )
-    }
-
-    /**
      * A predefined set of common response codes
      */
-    object Code {
-        case class OK() extends Code(200)
-        case class Created() extends Code(201)
-        case class Accepted() extends Code(202)
-        case class NoContent() extends Code(204)
-        case class Moved() extends Code(301)
-        case class Found() extends Code(302)
-        case class SeeOther() extends Code(303)
-        case class NotModified() extends Code(304)
-        case class TemporaryRedirect() extends Code(307)
-        case class BadRequest() extends Code(400)
-        case class Unauthorized() extends Code(401)
-        case class Forbidden() extends Code(403)
-        case class NotFound() extends Code(404)
-        case class MethodNotAllowed() extends Code(405)
-        case class NotAcceptable() extends Code(406)
-        case class Conflict() extends Code(409)
-        case class Gone() extends Code(410)
-        case class PreconditionFailed() extends Code(412)
-        case class EntityTooLarge() extends Code(413)
-        case class UnsupportedMediaType() extends Code(415)
-        case class ExpectationFailed() extends Code(417)
-        case class InternalServerError() extends Code(500)
-        case class NotImplemented() extends Code(501)
-        case class BadGateway() extends Code(502)
-        case class ServiceUnavailable() extends Code(503)
-        case class GatewayTimeout() extends Code(504)
+    object Code extends Enumeration {
+
+        /** Defines individual response codes */
+        case class Code( val code: Int ) extends Value {
+            assert( code >= 100 )
+            assert( code < 600 )
+            override def id = code
+        }
+
+        val OK = Code(200)
+        val Created = Code(201)
+        val Accepted = Code(202)
+        val NoContent = Code(204)
+        val Moved = Code(301)
+        val Found = Code(302)
+        val SeeOther = Code(303)
+        val NotModified = Code(304)
+        val TemporaryRedirect = Code(307)
+        val BadRequest = Code(400)
+        val Unauthorized = Code(401)
+        val Forbidden = Code(403)
+        val NotFound = Code(404)
+        val MethodNotAllowed = Code(405)
+        val NotAcceptable = Code(406)
+        val Conflict = Code(409)
+        val Gone = Code(410)
+        val PreconditionFailed = Code(412)
+        val EntityTooLarge = Code(413)
+        val UnsupportedMediaType = Code(415)
+        val ExpectationFailed = Code(417)
+        val InternalServerError = Code(500)
+        val NotImplemented = Code(501)
+        val BadGateway = Code(502)
+        val ServiceUnavailable = Code(503)
+        val GatewayTimeout = Code(504)
     }
+
+    /** HTTP Response Codes */
+    type Code = Code.Code
 
     /**
      * The base class for the enumeration of header names
@@ -141,7 +144,6 @@ object Response {
      * A finalization flag for actor based responses
      */
     case class Done()
-
 }
 
 
@@ -258,54 +260,53 @@ trait Response {
     /**
      * Sends a 200 OK
      */
-    def ok = code( Response.Code.OK() )
+    def ok = code( Response.Code.OK )
 
     /**
      * Sends a 201 OK
      */
-    def created = code( Response.Code.Created() )
+    def created = code( Response.Code.Created )
 
     /**
      * Sends a 400 Bad Requestcode
      */
-    def badRequest = code( Response.Code.BadRequest() )
+    def badRequest = code( Response.Code.BadRequest )
 
     /**
      * Sends a 401 unauthorized code
      */
-    def unauthorized = code( Response.Code.Unauthorized() )
+    def unauthorized = code( Response.Code.Unauthorized )
 
     /**
      * Sends a 403 forbidden code
      */
-    def forbidden = code( Response.Code.Forbidden() )
+    def forbidden = code( Response.Code.Forbidden )
 
     /**
      * Sends a 404 Not Found code
      */
-    def notFound = code( Response.Code.NotFound() )
+    def notFound = code( Response.Code.NotFound )
 
     /**
      * Sends a 500 internal server error code
      */
-    def serverError = code( Response.Code.InternalServerError() )
+    def serverError = code( Response.Code.InternalServerError )
 
     /**
      * Sends a 409 Conflict response code
      */
-    def conflict = code( Response.Code.Conflict() )
+    def conflict = code( Response.Code.Conflict )
 
     /**
      * Redirects the client using a 302 Found response code
      */
     def found ( url: String ): Response
-        = code( Response.Code.Found() ).location(url)
+        = code( Response.Code.Found ).location(url)
 
     /**
      * Redirects the client using a 301 Moved response code
      */
     def moved ( url: String ): Response
-        = code( Response.Code.Moved() ).location(url)
-
+        = code( Response.Code.Moved ).location(url)
 }
 

@@ -24,7 +24,7 @@ class ServletResponse (
 
     /** The status code being sent back */
     private val responseCode
-        = new AtomicReference[Response.Code]( Response.Code.OK() )
+        = new AtomicReference[Response.Code]( Response.Code.OK )
 
     /** Whether this request supports gzip encoding */
     private lazy val gzip = request.getHeader("Accept-Encoding") match {
