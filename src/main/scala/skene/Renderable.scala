@@ -1,7 +1,7 @@
 package com.roundeights.skene
 
 import java.io.{InputStream, OutputStream, Reader, Writer, OutputStreamWriter}
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, PrintStream}
 import scala.xml.NodeSeq
 
 import scala.io.Codec
@@ -47,6 +47,13 @@ object Renderable {
         /** Constructor...  */
         def this ( callback: () => String )
             = this( (stream, codec) => write( callback(), stream, codec ) )
+
+        /** Constructor...  */
+        def this ( callback: (PrintStream) => Unit ) = this(
+            (stream, codec) => callback(
+                new PrintStream(stream, true, codec.name)
+            )
+        )
 
         /** {@inheritDoc} */
         override def render ( output: OutputStream, codec: Codec )
@@ -124,6 +131,9 @@ object Renderable {
         = new CallbackRenderer( callback )
 
     implicit def apply ( callback: (OutputStream, Codec) => Unit ): Renderable
+        = new CallbackRenderer( callback )
+
+    implicit def apply ( callback: (PrintStream) => Unit ): Renderable
         = new CallbackRenderer( callback )
 
     implicit def apply ( content: NodeSeq ): Renderable

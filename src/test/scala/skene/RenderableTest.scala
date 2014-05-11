@@ -42,6 +42,10 @@ class RenderableTest extends Specification with Mockito {
             assertRenders( Renderable(() => "<p>Data</p>" ) )
         }
 
+        "render from a PrintStream" in {
+            assertRenders( Renderable((print) => print.print("<p>Data</p>")) )
+        }
+
         "render from an XML block" in {
             assertRenders( Renderable(<p>Data</p>) )
         }
