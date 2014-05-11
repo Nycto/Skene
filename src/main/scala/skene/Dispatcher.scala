@@ -1,6 +1,8 @@
 package com.roundeights.skene
 
 import scala.concurrent.ExecutionContext
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 
 /**
@@ -44,86 +46,94 @@ object Dispatcher {
  * This class is thread safe
  */
 class Dispatcher (
-    private val entries: List[(Matcher, Handler)] = Nil,
-    private val default: Option[Handler] = None,
-    private val onError: Option[Dispatcher.OnError] = None
+    entryList: Seq[(Matcher, Handler)] = Nil,
+    defaultHandler: Option[Handler] = None,
+    errorHandler: Option[Dispatcher.OnError] = None
 )(
     implicit context: ExecutionContext
 ) extends Handler with Matcher {
 
-    /**
-     * The list of matchers, ordered for faster parsing
-     */
-    private lazy val reversed = entries.reverse
+    /** The list of matchers, ordered for faster parsing */
+    private val entries = new ConcurrentLinkedQueue[(Matcher, Handler)]
+    entryList.map( entries.add _ )
 
-    /** {@inheritDoc} */
-    override def matches ( request: Request ): Matcher.Result = {
-        @tailrec def findMatch (
-            remaining: List[(Matcher, Handler)]
-        ): Matcher.Result = remaining match {
-            case Nil => Matcher.Result(false)
-            case head :: tail => {
-                head._1.matches(request) match {
-                    case matched@Matcher.Result(true, _) => matched
-                    case Matcher.Result(false, _) => findMatch(tail)
+    /** The default handler to invoke */
+    private val default = new AtomicReference[Option[Handler]]( defaultHandler )
+
+    /** The default handler to invoke */
+    private val onError
+        = new AtomicReference[Option[Dispatcher.OnError]]( errorHandler )
+
+    /** Finds the matching handler for a request */
+    private def findMatch (
+        request: Request
+    ): Option[(Handler, Matcher.Result)] ={
+        val iterator = entries.iterator
+
+        @tailrec def find: Option[(Handler, Matcher.Result)] = {
+            if ( !iterator.hasNext ) {
+                None
+            }
+            else {
+                val next = iterator.next
+                next._1.matches(request) match {
+                    case result@Matcher.Result(true, _) =>
+                        Some( (next._2 -> result) )
+                    case Matcher.Result(false, _) => find
                 }
             }
         }
 
-        if ( default.isDefined )
+        find
+    }
+
+    /** {@inheritDoc} */
+    override def matches ( request: Request ): Matcher.Result = {
+        if ( default.get.isDefined ) {
             Matcher.Result(true)
-        else
-            findMatch( reversed )
+        }
+        else {
+            findMatch( request ) match {
+                case Some((_, matched@Matcher.Result(true, _))) => matched
+                case _ => Matcher.Result(false)
+            }
+        }
     }
 
-    /**
-     * Adds a matcher/handler pair to this Dispatcher
-     */
-    def add ( matcher: Matcher, handler: Handler )
-        = new Dispatcher( (matcher -> handler) :: entries, default, onError )
-
-    /**
-     * Changes the default handler for this dispatcher
-     */
-    def default ( handler: Handler )
-        = new Dispatcher( entries, Some(handler), onError )
-
-    /**
-     * Changes the error handler for this dispatcher
-     */
-    def error ( handler: Dispatcher.OnError ): Dispatcher
-        = new Dispatcher( entries, default, Some(handler) )
-
-    /**
-     * Changes the error handler for this dispatcher
-     */
-    def error ( handler: Dispatcher.SimpleOnError ): Dispatcher = {
-        new Dispatcher( entries, default, Some(
-            (_, req, resp) => handler(req, resp)
-        ) )
+    /** Adds a matcher/handler pair to this Dispatcher */
+    def add ( entry: (Matcher, Handler ) ): Dispatcher = {
+        entries.add( entry )
+        this
     }
+
+    /** Adds a matcher/handler pair to this Dispatcher */
+    def add ( matcher: Matcher, handler: Handler ): Dispatcher
+        = add( (matcher -> handler) )
+
+    /** Changes the default handler for this dispatcher */
+    def default ( handler: Handler ): Dispatcher = {
+        default.set( Some(handler) )
+        this
+    }
+
+    /** Changes the error handler for this dispatcher */
+    def error ( handler: Dispatcher.OnError ): Dispatcher = {
+        onError.set( Some(handler) )
+        this
+    }
+
+    /** Changes the error handler for this dispatcher */
+    def error ( handler: Dispatcher.SimpleOnError ): Dispatcher
+        = error( (_, req, resp) => handler(req, resp) )
 
     /** {@inheritDoc} */
     override def handle (
         recover: Recover, request: Request, response: Response
     ): Unit = {
 
-        @tailrec def findMatch (
-            remaining: List[(Matcher, Handler)]
-        ): Option[(Map[String,String], Handler)] = remaining match {
-            case Nil => None
-            case head :: tail => {
-                head._1.matches(request) match {
-                    case Matcher.Result(true, params)
-                        => Some( (params, head._2) )
-                    case Matcher.Result(false, _) => findMatch( tail )
-                }
-            }
-        }
-
         // If a specific error handler has been defined, use it. Otherwise,
         // use the default error recovery object
-        val customRecover = onError match {
+        val customRecover = onError.get match {
             case None => recover
             case Some(onError) =>
                 Recover.using( onError( recover, request, response ) )
@@ -131,16 +141,17 @@ class Dispatcher (
         }
 
         customRecover.from {
-            findMatch( reversed ) match {
-                case None => {
-                    default
+            findMatch( request ) match {
+                case Some( (handler, Matcher.Result(true, params)) ) => {
+                    handler.handle(
+                        customRecover, request.withParams(params), response
+                    )
+                }
+                case _ => {
+                    default.get
                         .getOrElse( Dispatcher.onUnmatched )
                         .handle( customRecover, request, response )
                 }
-
-                case Some( (params, handler) ) => handler.handle(
-                    customRecover, request.withParams(params), response
-                )
             }
         }
 

@@ -1,10 +1,8 @@
 package com.roundeights.skene
 
-import scala.annotation.tailrec
 import com.roundeights.skene._
 import com.roundeights.skene.Request.Method
 import scala.concurrent.ExecutionContext
-import java.util.concurrent.atomic.AtomicReference
 
 
 /** Attaches a matcher to a handler */
@@ -192,59 +190,29 @@ class Skene (
     override implicit protected val context: ExecutionContext
 ) extends Handler with Matcher with Fluent {
 
-    /** An interface for managing a Dispatcher in a thread safe way */
-    private class LazyAtomicRef[T]
-        ( create: => T )
-        ( implicit ev: Null <:< T )
-    {
-
-        /** The internal reference */
-        private val ref = new AtomicReference[T]
-
-        /** Returns the current ref */
-        @tailrec final def get: T = {
-            val value = ref.get
-            if ( value != null )
-                value
-            else if ( ref.compareAndSet(null, create) )
-                create
-            else
-                get
-        }
-
-        /** Changes the value of the ref in a thread safe manner */
-        @tailrec final def set ( callback: T => T ): Unit = {
-            val current = get
-            val changed = callback( current )
-            if ( !ref.compareAndSet(current, changed) )
-                set( callback )
-        }
-    }
-
     /** The internal dispatcher */
-    private val dispatcher = new LazyAtomicRef[Dispatcher](new Dispatcher)
+    private val dispatcher = new Dispatcher
 
     /** {@inheritDoc} */
     override def handle(
         recover: Recover, request: Request, response: Response
     ): Unit = {
-        dispatcher.get.handle( recover, request, response )
+        dispatcher.handle( recover, request, response )
     }
 
     /** {@inheritDoc} */
     override def matches ( request: Request ): Matcher.Result
-        = dispatcher.get.matches( request )
+        = dispatcher.matches( request )
 
     /** {@inheritDoc} */
     override def when ( matcher: Matcher ): Finalize = new Finalize(
         matcher,
-        ( matcher: Matcher, handler: Handler ) =>
-            dispatcher.set( _.add( matcher, handler ) )
+        (matcher: Matcher, handler: Handler) =>
+            dispatcher.add(matcher, handler)
     )
 
     /** Sets up a default handler */
-    def default ( handler: Handler ): Unit
-        = dispatcher.set( _.default(handler) )
+    def default ( handler: Handler ): Unit = dispatcher.default(handler)
 
     /** Sets up a default handler from a callback */
     def default ( handler: (Request, Response) => Unit ): Unit
@@ -256,15 +224,14 @@ class Skene (
 
     /** Sets up the handler for when exceptions are thrown */
     def error ( handler: Dispatcher.OnError ): Unit
-        = dispatcher.set( _.error( handler ) )
+        = dispatcher.error( handler )
 
     /** Sets up the handler for when exceptions are thrown */
     def error ( handler: Dispatcher.SimpleOnError ): Unit
-        = dispatcher.set( _.error( handler ) )
+        = dispatcher.error( handler )
 
     /** Delegates to another object if it matches */
     def delegate ( to: Handler with Matcher ): Unit = when( to )( to )
-
 }
 
 
