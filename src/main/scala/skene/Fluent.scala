@@ -96,46 +96,46 @@ trait Fluent {
         = when( Matcher.method( method ) )
 
     /** Applies a handler for GET requests */
-    lazy val isGet: Finalize = method( Method.GET() )
+    lazy val isGet: Finalize = method( Method.GET )
 
     /** Applies a handler for POST requests */
-    lazy val isPost: Finalize = method( Method.POST() )
+    lazy val isPost: Finalize = method( Method.POST )
 
     /** Applies a handler for DELETE requests */
-    lazy val isDelete: Finalize = method( Method.DELETE() )
+    lazy val isDelete: Finalize = method( Method.DELETE )
 
     /** Applies a handler for PUT requests */
-    lazy val isPut: Finalize = method( Method.PUT() )
+    lazy val isPut: Finalize = method( Method.PUT )
 
     /** Applies a handler for PATCH requests */
-    lazy val isPatch: Finalize = method( Method.PATCH() )
+    lazy val isPatch: Finalize = method( Method.PATCH )
 
     /** Applies a handler for HEAD requests */
-    lazy val isHead: Finalize = method( Method.HEAD() )
+    lazy val isHead: Finalize = method( Method.HEAD )
 
     /** Adds a handler for GET requests to the given path */
     def get ( path: String ): Finalize
-        = when( Matcher.method(Method.GET()) and Matcher.path(path) )
+        = when( Matcher.method(Method.GET) and Matcher.path(path) )
 
     /** Adds a handler for POST requests to the given path */
     def post ( path: String ): Finalize
-        = when( Matcher.method(Method.POST()) and Matcher.path(path) )
+        = when( Matcher.method(Method.POST) and Matcher.path(path) )
 
     /** Adds a handler for DELETE requests to the given path */
     def delete ( path: String ): Finalize
-        = when( Matcher.method(Method.DELETE()) and Matcher.path(path) )
+        = when( Matcher.method(Method.DELETE) and Matcher.path(path) )
 
     /** Adds a handler for PUT requests to the given path */
     def put ( path: String ): Finalize
-        = when( Matcher.method(Method.PUT()) and Matcher.path(path) )
+        = when( Matcher.method(Method.PUT) and Matcher.path(path) )
 
     /** Adds a handler for PATCH requests to the given path */
     def patch ( path: String ): Finalize
-        = when( Matcher.method(Method.PATCH()) and Matcher.path(path) )
+        = when( Matcher.method(Method.PATCH) and Matcher.path(path) )
 
     /** Adds a handler for HEAD requests to the given path */
     def head ( path: String ): Finalize
-        = when( Matcher.method(Method.HEAD()) and Matcher.path(path) )
+        = when( Matcher.method(Method.HEAD) and Matcher.path(path) )
 
     /** Adds a handler that matches secure requests */
     lazy val isSecure: Finalize = when( Matcher.isSecure )

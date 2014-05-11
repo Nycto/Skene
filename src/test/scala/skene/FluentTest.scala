@@ -98,7 +98,7 @@ class FluentTest extends Specification with Mockito {
         "match POST requests" in {
             val test = new AssertURL(BareRequest(
                 url = URL("http://example.com/page"),
-                method = Request.Method.POST()
+                method = Request.Method.POST
             ))
 
             test.matches( new Skene {
@@ -113,7 +113,7 @@ class FluentTest extends Specification with Mockito {
         "match DELETE requests" in {
             val test = new AssertURL(BareRequest(
                 url = URL("http://example.com/page"),
-                method = Request.Method.DELETE()
+                method = Request.Method.DELETE
             ))
 
             test.matches( new Skene {
@@ -128,7 +128,7 @@ class FluentTest extends Specification with Mockito {
         "match PUT requests" in {
             val test = new AssertURL(BareRequest(
                 url = URL("http://example.com/page"),
-                method = Request.Method.PUT()
+                method = Request.Method.PUT
             ))
 
             test.matches( new Skene {
@@ -140,10 +140,10 @@ class FluentTest extends Specification with Mockito {
             } )
         }
 
-        "match PUT requests" in {
+        "match HEAD requests" in {
             val test = new AssertURL(BareRequest(
                 url = URL("http://example.com/page"),
-                method = Request.Method.HEAD()
+                method = Request.Method.HEAD
             ))
 
             test.matches( new Skene {

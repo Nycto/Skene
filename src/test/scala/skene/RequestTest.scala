@@ -25,7 +25,7 @@ class RequestTest extends Specification {
     "The Request Method Accessor methods" should {
 
         "Respond to the GET method" in {
-            val request = BareRequest( method = Request.Method.GET() )
+            val request = BareRequest( method = Request.Method.GET )
             request.isGet must_== true
             request.isPost must_== false
             request.isDelete must_== false
@@ -33,7 +33,7 @@ class RequestTest extends Specification {
         }
 
         "Respond to the POST method" in {
-            val request = BareRequest( method = Request.Method.POST() )
+            val request = BareRequest( method = Request.Method.POST )
             request.isGet must_== false
             request.isPost must_== true
             request.isDelete must_== false
@@ -41,7 +41,7 @@ class RequestTest extends Specification {
         }
 
         "Respond to the DELETE method" in {
-            val request = BareRequest( method = Request.Method.DELETE() )
+            val request = BareRequest( method = Request.Method.DELETE )
             request.isGet must_== false
             request.isPost must_== false
             request.isDelete must_== true
@@ -49,7 +49,7 @@ class RequestTest extends Specification {
         }
 
         "Respond to the PUT method" in {
-            val request = BareRequest( method = Request.Method.PUT() )
+            val request = BareRequest( method = Request.Method.PUT )
             request.isGet must_== false
             request.isPost must_== false
             request.isDelete must_== false
@@ -83,25 +83,25 @@ class RequestTest extends Specification {
     "The Request.Method enum" should {
 
         "be buildable from a string" in {
-            Request.Method("GET") must_== Request.Method.GET()
-            Request.Method("Post") must_== Request.Method.POST()
-            Request.Method("Um") must_== Request.Method.UNKNOWN("Um")
+            Request.Method("GET") must_== Request.Method.GET
+            Request.Method("Post") must_== Request.Method.POST
+            Request.Method("Um") must_== Request.Method.UNKNOWN
 
-            Request.Method("Post") must_!= Request.Method.GET()
+            Request.Method("Post") must_!= Request.Method.GET
         }
 
         "convert to strings" in {
-            Request.Method.GET().toString must_== "GET"
-            Request.Method.POST().toString must_== "POST"
-            Request.Method.DELETE().toString must_== "DELETE"
-            Request.Method.PUT().toString must_== "PUT"
+            Request.Method.GET.toString must_== "GET"
+            Request.Method.POST.toString must_== "POST"
+            Request.Method.DELETE.toString must_== "DELETE"
+            Request.Method.PUT.toString must_== "PUT"
         }
 
         "respond well to pattern matching" in {
             Request.Method("GET") match {
-                case Request.Method.POST() => ko
-                case Request.Method.UNKNOWN(_) => ko
-                case Request.Method.GET() => ok
+                case Request.Method.POST => ko
+                case Request.Method.UNKNOWN => ko
+                case Request.Method.GET => ok
                 case _ => ko
             }
             ok
