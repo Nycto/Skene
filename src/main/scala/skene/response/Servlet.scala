@@ -57,7 +57,7 @@ class ServletResponse (
         Actor.loop {
             Actor.react {
                 case Response.Header( field, value ) =>
-                    response.setHeader( field.name, value )
+                    response.setHeader( field.toString, value )
 
                 case code: Response.Code => {
                     response.setStatus( code.code )

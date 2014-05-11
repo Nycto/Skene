@@ -53,51 +53,46 @@ object Response {
     type Code = Code.Code
 
     /**
-     * The base class for the enumeration of header names
-     */
-    sealed abstract class HeaderField ( val name: String )
-
-    /**
      * The supported list of HTTP headers
      */
-    object Header {
-        case class AcceptRanges() extends HeaderField("Accept-Ranges")
-        case class Age() extends HeaderField("Age")
-        case class Allow() extends HeaderField("Allow")
-        case class CacheControl() extends HeaderField("Cache-Control")
-        case class Connection() extends HeaderField("Connection")
-        case class ContentEncoding() extends HeaderField("Content-Encoding")
-        case class ContentLanguage() extends HeaderField("Content-Language")
-        case class ContentLength() extends HeaderField("Content-Length")
-        case class ContentLocation() extends HeaderField("Content-Location")
-        case class ContentMD5() extends HeaderField("Content-MD5")
-        case class ContentDisposition()
-            extends HeaderField("Content-Disposition")
-        case class ContentRange() extends HeaderField("Content-Range")
-        case class ContentType() extends HeaderField("Content-Type")
-        case class Date() extends HeaderField("Date")
-        case class ETag() extends HeaderField("ETag")
-        case class Expires() extends HeaderField("Expires")
-        case class LastModified() extends HeaderField("Last-Modified")
-        case class Link() extends HeaderField("Link")
-        case class Location() extends HeaderField("Location")
-        case class P3P() extends HeaderField("P3P")
-        case class Pragma() extends HeaderField("Pragma")
-        case class ProxyAuthenticate()
-            extends HeaderField("Proxy-Authenticate")
-        case class Refresh() extends HeaderField("Refresh")
-        case class RetryAfter() extends HeaderField("Retry-After")
-        case class Server() extends HeaderField("Server")
-        case class SetCookie() extends HeaderField("Set-Cookie")
-        case class StrictTransportSecurity()
-            extends HeaderField("Strict-Transport-Security")
-        case class Trailer() extends HeaderField("Trailer")
-        case class TransferEncoding() extends HeaderField("Transfer-Encoding")
-        case class Vary() extends HeaderField("Vary")
-        case class Via() extends HeaderField("Via")
-        case class Warning() extends HeaderField("Warning")
-        case class WWWAuthenticate() extends HeaderField("WWW-Authenticate")
+    object Header extends Enumeration {
+        val AcceptRanges = Value("Accept-Ranges")
+        val Age = Value("Age")
+        val Allow = Value("Allow")
+        val CacheControl = Value("Cache-Control")
+        val Connection = Value("Connection")
+        val ContentEncoding = Value("Content-Encoding")
+        val ContentLanguage = Value("Content-Language")
+        val ContentLength = Value("Content-Length")
+        val ContentLocation = Value("Content-Location")
+        val ContentMD5 = Value("Content-MD5")
+        val ContentDisposition = Value("Content-Disposition")
+        val ContentRange = Value("Content-Range")
+        val ContentType = Value("Content-Type")
+        val Date = Value("Date")
+        val ETag = Value("ETag")
+        val Expires = Value("Expires")
+        val LastModified = Value("Last-Modified")
+        val Link = Value("Link")
+        val Location = Value("Location")
+        val P3P = Value("P3P")
+        val Pragma = Value("Pragma")
+        val ProxyAuthenticate = Value("Proxy-Authenticate")
+        val Refresh = Value("Refresh")
+        val RetryAfter = Value("Retry-After")
+        val Server = Value("Server")
+        val SetCookie = Value("Set-Cookie")
+        val StrictTransportSecurity = Value("Strict-Transport-Security")
+        val Trailer = Value("Trailer")
+        val TransferEncoding = Value("Transfer-Encoding")
+        val Vary = Value("Vary")
+        val Via = Value("Via")
+        val Warning = Value("Warning")
+        val WWWAuthenticate = Value("WWW-Authenticate")
     }
+
+    /** An HTTP Header Field */
+    type HeaderField = Header.Value
 
     /**
      * A Header Tuple with the name and value
@@ -199,13 +194,13 @@ trait Response {
      * Sends a location header
      */
     def location ( value: String ): Response
-        = header( Response.Header.Location(), value )
+        = header( Response.Header.Location, value )
 
     /**
      * Sends the given content type
      */
     def contentType ( value: String ): Response
-        = header( Response.Header.ContentType(), value )
+        = header( Response.Header.ContentType, value )
 
     /**
      * Sends the given content type
