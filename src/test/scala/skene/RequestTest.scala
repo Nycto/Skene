@@ -104,6 +104,7 @@ class RequestTest extends Specification {
                 case Request.Method.GET() => ok
                 case _ => ko
             }
+            ok
         }
 
     }
