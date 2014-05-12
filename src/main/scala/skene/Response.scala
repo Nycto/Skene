@@ -100,35 +100,41 @@ object Response {
     case class Header( val field: HeaderField, val value: String )
 
     /**
-     * The base class for the enumeration of common Content-Type headers
-     */
-    sealed abstract class ContentType ( val mimeType: String )
-
-    /**
      * The supported list of HTTP methods
      */
-    object ContentType {
-        case class Atom() extends ContentType("application/atom+xml")
-        case class Bin() extends ContentType("application/octet-stream")
-        case class Bmp() extends ContentType("image/bmp")
-        case class Css() extends ContentType("text/css")
-        case class Gif() extends ContentType("image/gif")
-        case class Html() extends ContentType("text/html;charset=utf-8")
-        case class Icon() extends ContentType("image/x-icon")
-        case class Jpeg() extends ContentType("image/jpeg")
-        case class JavaScript() extends ContentType("application/x-javascript")
-        case class Json() extends ContentType("application/json")
-        case class Pdf() extends ContentType("application/pdf")
-        case class Png() extends ContentType("image/png")
-        case class Svg() extends ContentType("image/svg+xml")
-        case class Swf() extends ContentType("application/x-shockwave-flash")
-        case class Text() extends ContentType("text/plain")
-        case class Tiff() extends ContentType("image/tiff")
-        case class Xhtml() extends ContentType("application/xhtml+xml")
-        case class Xml() extends ContentType("application/xml")
-        case class Xslt() extends ContentType("application/xslt+xml")
-        case class Zip() extends ContentType("application/zip")
+    object ContentType extends Enumeration {
+
+        /** Defines a specific mimeType */
+        case class MimeType( val mimeType: String ) extends Value {
+            override val id = nextId
+        }
+
+        val Atom = MimeType("application/atom+xml")
+        val Bin = MimeType("application/octet-stream")
+        val Bmp = MimeType("image/bmp")
+        val Css = MimeType("text/css")
+        val Gif = MimeType("image/gif")
+        val Html = MimeType("text/html;charset=utf-8")
+        val Icon = MimeType("image/x-icon")
+        val Jpeg = MimeType("image/jpeg")
+        val JavaScript = MimeType("application/x-javascript")
+        val Json = MimeType("application/json")
+        val Pdf = MimeType("application/pdf")
+        val Png = MimeType("image/png")
+        val Svg = MimeType("image/svg+xml")
+        val Swf = MimeType("application/x-shockwave-flash")
+        val Text = MimeType("text/plain")
+        val Tiff = MimeType("image/tiff")
+        val Xhtml = MimeType("application/xhtml+xml")
+        val Xml = MimeType("application/xml")
+        val Xslt = MimeType("application/xslt+xml")
+        val Zip = MimeType("application/zip")
     }
+
+    /**
+     * The base class for the enumeration of common Content-Type headers
+     */
+    type ContentType = ContentType.MimeType
 
     /**
      * A flag to flush the response for actor based responses
@@ -211,22 +217,22 @@ trait Response {
     /**
      * Clones this response and sets the Content-Type to HTML
      */
-    def isHtml: Response = contentType( Response.ContentType.Html() )
+    def isHtml: Response = contentType( Response.ContentType.Html )
 
     /**
      * Clones this response and sets the Content-Type to XML
      */
-    def isXml: Response = contentType( Response.ContentType.Xml() )
+    def isXml: Response = contentType( Response.ContentType.Xml )
 
     /**
      * Clones this response and sets the Content-Type to JSON
      */
-    def isJson: Response = contentType( Response.ContentType.Json() )
+    def isJson: Response = contentType( Response.ContentType.Json )
 
     /**
      * Clones this response and sets the Content-Type to Plain Text
      */
-    def isText: Response = contentType( Response.ContentType.Text() )
+    def isText: Response = contentType( Response.ContentType.Text )
 
     /**
      * A helper for building an HTML response
