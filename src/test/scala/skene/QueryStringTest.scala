@@ -13,6 +13,11 @@ class QueryStringTest extends Specification {
                 QueryString( "a" -> "b", "c" -> "d" )
         }
 
+        "Allow optional parameters to be added" in {
+            Some("a" -> "b") :: None :: QueryString() must_==
+                QueryString( "a" -> "b" )
+        }
+
         "Provide access to values by key" in {
             QueryString()("a") must_== None
             QueryString( "a" -> "b", "c" -> "d" )("c") must_== Some("d")

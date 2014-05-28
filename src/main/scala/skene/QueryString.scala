@@ -47,7 +47,20 @@ case class QueryString (
         = toList.find( _._1 == key ).map( _._2 )
 
     /** Adds a parameter */
-    def :: ( param: (String, String) ) = QueryString(param :: toList)
+    def prepend ( param: (String, String) ): QueryString
+        = new QueryString(param :: toList)
+
+    /** Optionally adds a parameter */
+    def prepend ( param: Option[(String, String)] ): QueryString = param match {
+        case Some(tuple) => new QueryString(tuple :: toList)
+        case None => this
+    }
+
+    /** Adds a parameter */
+    def :: ( param: (String, String) ): QueryString = prepend(param)
+
+    /** Optionally adds a parameter */
+    def :: ( param: Option[(String, String)] ): QueryString = prepend(param)
 
     /** {@inheritDoc} */
     override def toString: String = {
