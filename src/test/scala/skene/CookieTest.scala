@@ -70,16 +70,16 @@ class CookieTest extends Specification {
         )
 
         "Return a list of named cookies" in {
-            jar("Not a Key") must_== Seq()
-            jar("key2") must_== Seq( Cookie("key2", "val2") )
-            jar("key") must_==
+            jar.all("Not a Key") must_== Seq()
+            jar.all("key2") must_== Seq( Cookie("key2", "val2") )
+            jar.all("key") must_==
                 Seq( Cookie("key", "val1"), Cookie("key", "val3") )
         }
 
         "Return the first cookie with the given name" in {
-            jar.first("Not a Key") must_== None
-            jar.first("key2") must_== Some( Cookie("key2", "val2") )
-            jar.first("key") must_== Some( Cookie("key", "val1") )
+            jar("Not a Key") must_== None
+            jar("key2") must_== Some( Cookie("key2", "val2") )
+            jar("key") must_== Some( Cookie("key", "val3") )
         }
     }
 

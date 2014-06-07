@@ -68,9 +68,9 @@ case class CookieJar (
     override def iterator = cookies.iterator
 
     /** Returns all the cookies with the given key */
-    def apply( name: String ): Seq[Cookie] = cookies.filter( _.name == name )
+    def all( name: String ): Seq[Cookie] = cookies.filter( _.name == name )
 
-    /** Returs the first cookie with the given name */
-    def first( name: String ): Option[Cookie] = cookies.find( _.name == name )
+    /** Returns the first cookie with the given name */
+    def apply( name: String ): Option[Cookie] = all(name).lastOption
 }
 
