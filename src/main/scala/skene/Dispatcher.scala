@@ -41,11 +41,10 @@ object Dispatcher {
 }
 
 /** Runs a request against a list of matchers */
-private class MatchFinder[T] ( initial: Traversable[(Matcher, T)] ) {
+private class MatchFinder[T] () {
 
     /** The list of matchers, ordered for faster parsing */
     private val entries = new ConcurrentLinkedQueue[(Matcher, T)]
-    initial.map( entries.add _ )
 
     /** Add a new value */
     def add ( entry: (Matcher, T) ): Unit = entries.add(entry)
@@ -78,22 +77,17 @@ private class MatchFinder[T] ( initial: Traversable[(Matcher, T)] ) {
  * This class is thread safe
  */
 class Dispatcher (
-    entryList: Seq[(Matcher, Handler)] = Nil,
-    defaultHandler: Option[Handler] = None,
-    errorHandler: Option[Dispatcher.OnError] = None
-)(
     implicit context: ExecutionContext
 ) extends Handler with Matcher {
 
     /** The list of matchers, ordered for faster parsing */
-    private val entries = new MatchFinder[Handler](entryList)
+    private val entries = new MatchFinder[Handler]()
 
     /** The default handler to invoke */
-    private val default = new AtomicReference[Option[Handler]]( defaultHandler )
+    private val default = new AtomicReference[Option[Handler]](None)
 
     /** The default handler to invoke */
-    private val onError
-        = new AtomicReference[Option[Dispatcher.OnError]]( errorHandler )
+    private val onError = new AtomicReference[Option[Dispatcher.OnError]](None)
 
     /** {@inheritDoc} */
     override def matches ( request: Request ): Matcher.Result = {
