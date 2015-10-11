@@ -69,6 +69,22 @@ private class MatchFinder[T] () {
 
         find
     }
+
+    /** Applies an iterator to every match */
+    def all(request: Request): Traversable[(T, Matcher.Result)] = {
+        new Traversable[(T, Matcher.Result)] {
+            override def foreach[U](f: ((T, Matcher.Result)) => U): Unit = {
+                val iterator = entries.iterator
+                while ( iterator.hasNext ) {
+                    val pair = iterator.next
+                    val matched = pair._1.matches(request)
+                    if ( matched.passed ) {
+                        f(pair._2, matched)
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -81,7 +97,10 @@ class Dispatcher (
 ) extends Handler with Matcher {
 
     /** The list of matchers, ordered for faster parsing */
-    private val entries = new MatchFinder[Handler]()
+    private val entries = new MatchFinder[Handler]
+
+    /** Observers are async executed for every request that matches */
+    private val observers = new MatchFinder[Request => Unit]
 
     /** The default handler to invoke */
     private val default = new AtomicReference[Option[Handler]](None)
@@ -95,10 +114,7 @@ class Dispatcher (
             Matcher.Result(true)
         }
         else {
-            entries.find( request ) match {
-                case Some((_, matched@Matcher.Result(true, _))) => matched
-                case _ => Matcher.Result(false)
-            }
+            entries.find(request).map(_._2).getOrElse(Matcher.Result(false))
         }
     }
 
@@ -111,6 +127,12 @@ class Dispatcher (
     /** Adds a matcher/handler pair to this Dispatcher */
     def add ( matcher: Matcher, handler: Handler ): Dispatcher
         = add( (matcher -> handler) )
+
+    /** Adds a observer to this Dispatcher */
+    def observe ( matcher: Matcher, fn: Request => Unit ): Dispatcher = {
+        observers.add(matcher -> fn)
+        this
+    }
 
     /** Changes the default handler for this dispatcher */
     def default ( handler: Handler ): Dispatcher = {
@@ -132,6 +154,11 @@ class Dispatcher (
     override def handle (
         recover: Recover, request: Request, response: Response
     ): Unit = {
+
+        // Kick off any attached observers
+        observers.all(request).foreach(pair => context.execute(new Runnable {
+            override def run = pair._1( request.withParams(pair._2.params) )
+        }))
 
         // If a specific error handler has been defined, use it. Otherwise,
         // use the default error recovery object

@@ -5,6 +5,8 @@ import org.specs2.mock._
 
 import com.roundeights.skene._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration._
 
 class DispatcherTest extends Specification with Mockito {
 
@@ -234,6 +236,36 @@ class DispatcherTest extends Specification with Mockito {
                 .add( Matcher.never, mock[Handler] )
                 .add( Matcher.never, mock[Handler] )
                 .matches( request ) must_== Matcher.Result(false)
+        }
+    }
+
+    "Observers in a dispatcher" should {
+
+        "Execute when they match" in {
+            var one = Promise[Unit]()
+            var two = Promise[Unit]()
+            new Dispatcher()
+                .observe(Matcher.always, _ => one.success(Unit))
+                .observe(Matcher.always, _ => two.success(Unit))
+                .add( Matcher.always, mock[Handler] )
+                .handle( recover, request, response )
+
+            Await.result( one.future, Duration(3, "second") )
+            Await.result( two.future, Duration(3, "second") )
+            ok
+        }
+
+        "Not execute when don't match" in {
+            new Dispatcher()(new ExecutionContext {
+                override def execute(r: Runnable) = r.run
+                override def reportFailure(e: Throwable) = ()
+            })
+                .observe(Matcher.never, _ => throw new RuntimeException )
+                .observe(Matcher.never, _ => throw new RuntimeException )
+                .add( Matcher.always, mock[Handler] )
+                .handle( recover, request, response )
+
+            ok
         }
     }
 

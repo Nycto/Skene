@@ -8,13 +8,13 @@ import scala.concurrent.ExecutionContext
 /** Attaches a matcher to a handler */
 class Finalize (
     private[skene] val matcher: Matcher,
-    private val done:( Matcher, Handler ) => Unit
+    private val dispatcher: Dispatcher
 ) (
     implicit private val ctx: ExecutionContext
 ) {
 
     /** Joins this matcher with a Handler */
-    def apply ( handler: Handler ): Unit = done( matcher, handler )
+    def apply ( handler: Handler ): Unit = dispatcher.add(matcher, handler)
 
     /** Joins this matcher with a Handler */
     def apply ( callback: (Recover, Request, Response) => Unit ): Unit
@@ -27,6 +27,10 @@ class Finalize (
     /** Joins this matcher with a Handler */
     def apply ( callback: (Response) => Unit ): Unit
         = apply( Handler(callback) )
+
+    /** Adds an observer from this configuration */
+    def observe( callback: (Request) => Unit ): Unit
+        = dispatcher.observe(matcher, callback)
 
     /** {@inheritDoc} */
     override def toString = matcher.toString
@@ -41,7 +45,7 @@ class Finalize (
         new Fluent {
             override implicit protected val context = ctx
             override def when ( rightMatcher: Matcher ): Finalize
-                = new Finalize( combine(matcher, rightMatcher), done )(ctx)
+                = new Finalize(combine(matcher, rightMatcher), dispatcher)(ctx)
         }
     }
 
@@ -50,7 +54,7 @@ class Finalize (
      * to both pass
      */
     def and ( other: Finalize ): Finalize
-        = new Finalize( Matcher.and(matcher, other.matcher), done )
+        = new Finalize( Matcher.and(matcher, other.matcher), dispatcher )
 
     /**
      * Builds a new Fluent matcher that requires this matcher and another
@@ -63,7 +67,7 @@ class Finalize (
      * or another matcher pass
      */
     def or ( other: Finalize ): Finalize
-        = new Finalize(Matcher.or(matcher, other.matcher), done)
+        = new Finalize(Matcher.or(matcher, other.matcher), dispatcher)
 
     /**
      * Builds a new Fluent matcher that will match when either this
@@ -205,11 +209,8 @@ class Skene (
         = dispatcher.matches( request )
 
     /** {@inheritDoc} */
-    override def when ( matcher: Matcher ): Finalize = new Finalize(
-        matcher,
-        (matcher: Matcher, handler: Handler) =>
-            dispatcher.add(matcher, handler)
-    )
+    override def when ( matcher: Matcher ): Finalize
+        = new Finalize( matcher, dispatcher )
 
     /** Sets up a default handler */
     def default ( handler: Handler ): Unit = dispatcher.default(handler)
