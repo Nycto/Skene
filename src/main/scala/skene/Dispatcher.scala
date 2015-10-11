@@ -40,37 +40,21 @@ object Dispatcher {
 
 }
 
-/**
- * Dispatches a request against a set of handlers based on matching rules
- *
- * This class is thread safe
- */
-class Dispatcher (
-    entryList: Seq[(Matcher, Handler)] = Nil,
-    defaultHandler: Option[Handler] = None,
-    errorHandler: Option[Dispatcher.OnError] = None
-)(
-    implicit context: ExecutionContext
-) extends Handler with Matcher {
+/** Runs a request against a list of matchers */
+private class MatchFinder[T] ( initial: Traversable[(Matcher, T)] ) {
 
     /** The list of matchers, ordered for faster parsing */
-    private val entries = new ConcurrentLinkedQueue[(Matcher, Handler)]
-    entryList.map( entries.add _ )
+    private val entries = new ConcurrentLinkedQueue[(Matcher, T)]
+    initial.map( entries.add _ )
 
-    /** The default handler to invoke */
-    private val default = new AtomicReference[Option[Handler]]( defaultHandler )
-
-    /** The default handler to invoke */
-    private val onError
-        = new AtomicReference[Option[Dispatcher.OnError]]( errorHandler )
+    /** Add a new value */
+    def add ( entry: (Matcher, T) ): Unit = entries.add(entry)
 
     /** Finds the matching handler for a request */
-    private def findMatch (
-        request: Request
-    ): Option[(Handler, Matcher.Result)] ={
+    def find (request: Request): Option[(T, Matcher.Result)] = {
         val iterator = entries.iterator
 
-        @tailrec def find: Option[(Handler, Matcher.Result)] = {
+        @tailrec def find: Option[(T, Matcher.Result)] = {
             if ( !iterator.hasNext ) {
                 None
             }
@@ -86,6 +70,30 @@ class Dispatcher (
 
         find
     }
+}
+
+/**
+ * Dispatches a request against a set of handlers based on matching rules
+ *
+ * This class is thread safe
+ */
+class Dispatcher (
+    entryList: Seq[(Matcher, Handler)] = Nil,
+    defaultHandler: Option[Handler] = None,
+    errorHandler: Option[Dispatcher.OnError] = None
+)(
+    implicit context: ExecutionContext
+) extends Handler with Matcher {
+
+    /** The list of matchers, ordered for faster parsing */
+    private val entries = new MatchFinder[Handler](entryList)
+
+    /** The default handler to invoke */
+    private val default = new AtomicReference[Option[Handler]]( defaultHandler )
+
+    /** The default handler to invoke */
+    private val onError
+        = new AtomicReference[Option[Dispatcher.OnError]]( errorHandler )
 
     /** {@inheritDoc} */
     override def matches ( request: Request ): Matcher.Result = {
@@ -93,7 +101,7 @@ class Dispatcher (
             Matcher.Result(true)
         }
         else {
-            findMatch( request ) match {
+            entries.find( request ) match {
                 case Some((_, matched@Matcher.Result(true, _))) => matched
                 case _ => Matcher.Result(false)
             }
@@ -141,7 +149,7 @@ class Dispatcher (
         }
 
         customRecover.from {
-            findMatch( request ) match {
+            entries.find(request) match {
                 case Some( (handler, Matcher.Result(true, params)) ) => {
                     handler.handle(
                         customRecover, request.withParams(params), response
